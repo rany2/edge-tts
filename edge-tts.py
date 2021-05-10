@@ -59,6 +59,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="Microsoft Edge's Online TTS Reader")
 	group = parser.add_mutually_exclusive_group(required=True)
 	group.add_argument('-t', '--text', help='what TTS will say')
+	group.add_argument('-f', '--file', help='same as --text but read from file')
 	parser.add_argument('-v', '--voice', help='voice for TTS. Default: en-US-AriaNeural', default='en-US-AriaNeural')
 	parser.add_argument('-c', '--codec', help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. webm-24khz-16bit-mono-opus doesn't work", default='audio-24khz-48kbitrate-mono-mp3')
 	group.add_argument('-l', '--list-voices', help="lists available voices. Edge's list is incomplete so check https://bit.ly/2SFq1d3", action='store_true')
@@ -69,7 +70,10 @@ if __name__ == "__main__":
 	parser.add_argument('-w', '--disable-word-boundary', help="disable word boundary", action='store_false')
 	args = parser.parse_args()
 
-	if args.text is not None:
+	if args.text is not None or args.file is not None:
+		if args.file is not None:
+			with open(args.file, 'r') as file:
+				args.text = file.read()
 		codec = args.codec
 		voice = args.voice
 		pitchString = args.pitch
