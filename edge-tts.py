@@ -5,7 +5,7 @@ import uuid
 import argparse
 import urllib.request
 import websocket # pip install websocket-client
-from nltk.tokenize import wordpunct_tokenize
+from nltk.tokenize import sent_tokenize
 from xml.sax.saxutils import quoteattr as escape
 try:
 	import thread
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 		volumeString = args.volume
 		sentenceBoundaryEnabled = 'True' if args.enable_sentence_boundary else 'False'
 		wordBoundaryEnabled = 'True' if args.disable_word_boundary else 'False'
-		for text in wordpunct_tokenize(args.text.replace(chr(9), " ").replace(chr(13), " ").replace(chr(32), " ")):
+		for text in sent_tokenize(args.text.replace(chr(9), " ").replace(chr(13), " ").replace(chr(32), " ")):
 			run_tts()
 	elif args.list_voices is True:
 		list_voices()
