@@ -81,7 +81,7 @@ if __name__ == "__main__":
 		volumeString = args.volume
 		sentenceBoundaryEnabled = 'True' if args.enable_sentence_boundary else 'False'
 		wordBoundaryEnabled = 'True' if args.disable_word_boundary else 'False'
-		text = args.text
+		text = args.text.replace(chr(9), " ").replace(chr(13), " ").replace(chr(32), " ")
 		run_tts()
 	elif args.list_voices is True:
 		list_voices()
