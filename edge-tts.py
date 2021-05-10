@@ -70,11 +70,11 @@ if __name__ == "__main__":
 	parser.add_argument('-v', '--voice', help='voice for TTS. Default: en-US-AriaNeural', default='en-US-AriaNeural')
 	parser.add_argument('-c', '--codec', help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. webm-24khz-16bit-mono-opus doesn't work", default='audio-24khz-48kbitrate-mono-mp3')
 	group.add_argument('-l', '--list-voices', help="lists available voices. Edge's list is incomplete so check https://bit.ly/2SFq1d3", action='store_true')
-	parser.add_argument('-p', '--pitch', help="set TTS pitch. Default +0Hz", default="+0Hz")
-	parser.add_argument('-r', '--rate', help="set TTS rate. Default +0%%", default="+0%")
-	parser.add_argument('-V', '--volume', help="set TTS volume. Default +0%%", default="+0%")
-	parser.add_argument('-s', '--enable-sentence-boundary', help="enable sentence boundary", action='store_true')
-	parser.add_argument('-w', '--disable-word-boundary', help="disable word boundary", action='store_false')
+	parser.add_argument('-p', '--pitch', help="set TTS pitch. Default +0Hz, For more info check https://bit.ly/3eAE5Nx", default="+0Hz")
+	parser.add_argument('-r', '--rate', help="set TTS rate. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
+	parser.add_argument('-V', '--volume', help="set TTS volume. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
+	parser.add_argument('-s', '--enable-sentence-boundary', help="enable sentence boundary (not implemented but set)", action='store_true')
+	parser.add_argument('-w', '--disable-word-boundary', help="disable word boundary (not implemented but set)", action='store_false')
 	args = parser.parse_args()
 
 	if args.text is not None or args.file is not None:
