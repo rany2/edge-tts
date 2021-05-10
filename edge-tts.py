@@ -2,6 +2,7 @@
 import sys
 import json
 import uuid
+import signal
 import argparse
 import urllib.request
 import websocket # pip install websocket-client
@@ -15,6 +16,11 @@ except ImportError:
 trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
 voiceList = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=' + trustedClientToken
 wsUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + trustedClientToken
+
+def terminator(signo, stack_frame):
+	sys.exit()
+signal.signal(signal.SIGINT, terminator)
+signal.signal(signal.SIGTERM, terminator)
 
 def connectId():
 	return str(uuid.uuid4()).replace("-", "")
