@@ -7,7 +7,7 @@ import argparse
 import urllib.request
 import websocket # pip install websocket-client
 from email.utils import formatdate
-from xml.sax.saxutils import quoteattr as escape
+from xml.sax.saxutils import escape
 try:
 	import thread
 except ImportError:
