@@ -99,8 +99,15 @@ if __name__ == "__main__":
 
 	if (args.text or args.file) is not None:
 		if args.file is not None:
-			with open(args.file, 'r') as file:
-				args.text = file.read()
+			# we need to use sys.stdin.read() because some devices
+			# like Windows and Termux don't have a /dev/stdin.
+			if args.file == "/dev/stdin":
+				debug("stdin detected, reading natively from stdin")
+				args.text = sys.stdin.read()
+			else:
+				debug("reading from %s" % args.file)
+				with open(args.file, 'r') as file:
+					args.text = file.read()
 		codec = args.codec
 		voice = args.voice
 		pitchString = args.pitch
