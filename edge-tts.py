@@ -33,7 +33,7 @@ def connectId():
 	return str(uuid.uuid4()).replace("-", "")
 
 def on_message(ws, m):
-	m = m.encode() if type(m) is str else m
+	m = m.encode() if type(m) is not bytes else m
 	debug("Received %s" % m)
 	if b'turn.end' in m:
 		ws.close()
