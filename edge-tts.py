@@ -12,10 +12,10 @@ import unicodedata
 from email.utils import formatdate
 from xml.sax.saxutils import escape
 
-trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
 ssl_context = ssl.create_default_context()
+trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
+wssUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + trustedClientToken
 voiceList = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=' + trustedClientToken
-wsUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + trustedClientToken
 
 def debug(msg, fd=sys.stderr):
 	if DEBUG: print(msg, file=fd)
@@ -26,7 +26,7 @@ def connectId(): return str(uuid.uuid4()).replace("-", "")
 def removeIncompatibleControlChars(s):
 	output = []
 	for ch in s:
-		# We consider these control characters as whitespace
+		# We consider that these control characters are whitespace
 		if ch in ['\t','\n','\r']:
 			pass
 		else:
@@ -34,6 +34,29 @@ def removeIncompatibleControlChars(s):
 			if abr.startswith("C"): continue
 		output += [ ch ]
 	return "".join(output)
+
+# From https://github.com/pndurette/gTTS/blob/master/gtts/utils.py
+def _minimize(the_string, delim, max_size):
+	# Remove `delim` from start of `the_string`
+	# i.e. prevent a recursive infinite loop on `the_string[0:0]`
+	# if `the_string` starts with `delim` and is larger than `max_size`
+	if the_string.startswith(delim):
+		the_string = the_string[len(delim):]
+
+	if len(the_string) > max_size:
+		try:
+			# Find the highest index of `delim` in `the_string[0:max_size]`
+			# i.e. `the_string` will be cut in half on `delim` index
+			idx = the_string.rindex(delim, 0, max_size)
+		except ValueError:
+			# `delim` not found in `the_string`, index becomes `max_size`
+			# i.e. `the_string` will be cut in half arbitrarily on `max_size`
+			idx = max_size
+		# Call itself again for `the_string[idx:]`
+		return [the_string[:idx]] + \
+			_minimize(the_string[idx:], delim, max_size)
+	else:
+		return [the_string]
 
 def list_voices():
 	with urllib.request.urlopen(voiceList) as url:
@@ -51,7 +74,7 @@ def list_voices():
 	print()
 
 async def run_tts():
-	async with websockets.connect(wsUrl, ssl=ssl_context) as ws:
+	async with websockets.connect(wssUrl, ssl=ssl_context) as ws:
 		message='X-Timestamp:'+formatdate()+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
 		message+='{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"'+sentenceBoundaryEnabled+'","wordBoundaryEnabled":"'+wordBoundaryEnabled+'"},"outputFormat":"' + codec + '"}}}}\r\n'
 		await ws.send(message)
@@ -84,6 +107,7 @@ if __name__ == "__main__":
 	parser.add_argument('-V', '--volume', help="set TTS volume. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
 	parser.add_argument('-s', '--enable-sentence-boundary', help="enable sentence boundary (not implemented but set)", action='store_true')
 	parser.add_argument('-w', '--disable-word-boundary', help="disable word boundary (not implemented but set)", action='store_false')
+	parser.add_argument('-S', '--dont-split-sentences', help="sends entire text as is (careful because limit is unknown)", action='store_true')
 	parser.add_argument('-D', '--debug', help="some debugging", action='store_true')
 	args = parser.parse_args()
 	DEBUG = args.debug
@@ -106,7 +130,23 @@ if __name__ == "__main__":
 		volumeString = args.volume
 		sentenceBoundaryEnabled = 'true' if args.enable_sentence_boundary else 'false'
 		wordBoundaryEnabled = 'true' if args.disable_word_boundary else 'false'
-		text = removeIncompatibleControlChars(args.text)
-		asyncio.get_event_loop().run_until_complete(run_tts())
+		# Websocket max is 65536, lets say that overhead is approx. 5k
+		max_size = 65536 - 5000
+		if not args.dont_split_sentences:
+			try:
+				from nltk.tokenize import sent_tokenize
+				debug("Was able to load nltk module")
+			except Exception as e:
+				print("You need nltk for sentence splitting.", file=sys.stderr)
+				print("If you can't install it you could use the --dont-split-sentences flag.", file=sys.stderr)
+				debug("Exception was %s %s" % (e.message, e.args))
+				sys.exit(1)
+			for text in _minimize(" ".join(sent_tokenize(removeIncompatibleControlChars(args.text))), " ", max_size):
+				debug ("Sent %s to be TTSed!" % text)
+				asyncio.get_event_loop().run_until_complete(run_tts())
+		else:
+			for text in _minimize(removeIncompatibleControlChars(args.text), " ", max_size):
+				debug ("Sent %s to be TTSed!" % text)
+				asyncio.get_event_loop().run_until_complete(run_tts())
 	elif args.list_voices:
 		list_voices()
