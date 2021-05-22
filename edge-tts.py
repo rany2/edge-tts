@@ -23,7 +23,17 @@ def terminator(signo, stack_frame): sys.exit()
 signal.signal(signal.SIGINT, terminator)
 signal.signal(signal.SIGTERM, terminator)
 def connectId(): return str(uuid.uuid4()).replace("-", "")
-def removeIncompatibleControlChars(s): return "".join(ch for ch in s if unicodedata.category(ch)[0]!="C")
+def removeIncompatibleControlChars(s):
+	output = []
+	for ch in s:
+		# We consider these control characters as whitespace
+		if ch in ['\t','\n','\r']:
+			pass
+		else:
+			abr = unicodedata.category(ch)
+			if abr.startswith("C"): continue
+		output += [ ch ]
+	return "".join(output)
 
 def list_voices():
 	with urllib.request.urlopen(voiceList) as url:
