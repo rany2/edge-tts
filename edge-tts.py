@@ -106,7 +106,7 @@ if __name__ == "__main__":
 	parser.add_argument('-r', '--rate', help="set TTS rate. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
 	parser.add_argument('-V', '--volume', help="set TTS volume. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
 	parser.add_argument('-s', '--enable-sentence-boundary', help="enable sentence boundary (not implemented but set)", action='store_true')
-	parser.add_argument('-w', '--disable-word-boundary', help="disable word boundary (not implemented but set)", action='store_false')
+	parser.add_argument('-w', '--enable-word-boundary', help="enable word boundary (not implemented but set)", action='store_true')
 	parser.add_argument('-S', '--dont-split-sentences', help="sends entire text as is (careful because limit is unknown)", action='store_true')
 	parser.add_argument('-D', '--debug', help="some debugging", action='store_true')
 	args = parser.parse_args()
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 		rateString = args.rate
 		volumeString = args.volume
 		sentenceBoundaryEnabled = 'true' if args.enable_sentence_boundary else 'false'
-		wordBoundaryEnabled = 'true' if args.disable_word_boundary else 'false'
+		wordBoundaryEnabled = 'true' if args.enable_word_boundary else 'false'
 		# Websocket max is 65536, lets say that overhead is approx. 5k
 		max_size = 65536 - 5000
 		if not args.dont_split_sentences:
