@@ -33,7 +33,7 @@ edgePID=$!
 ## because it thinks file is empty and won't have any data.
 ##
 ## kill -0 checks if PID is still running.
-while [ "$(wc -c "$ttsmpeg")" == 0 ] || kill -0 "$edgePID" 2>/dev/null
+while kill -0 "$edgePID" 2>/dev/null && [ "$(wc -c < "$ttsmpeg")" == 0 ]
 do
 	sleep 0.1
 done
