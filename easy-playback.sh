@@ -27,10 +27,13 @@ else
 	stdin=""
 fi
 edge-tts "${@}" >"$ttsmpeg" <<<"$stdin" &
+edgePID=$!
 
 ## Wait until temporary file has some data so mpg123 doesn't exit immediately
 ## because it thinks file is empty and won't have any data.
-while [ "$(wc -c <"$ttsmpeg")" == 0 ]
+##
+## kill -0 checks if PID is still running.
+while [ "$(wc -c "$ttsmpeg")" == 0 ] || kill -0 "$edgePID" 2>/dev/null
 do
 	sleep 0.1
 done
