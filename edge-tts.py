@@ -50,11 +50,14 @@ def list_voices():
                 print("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
     print()
 
-def mkssmlmsg(text=""):
+def mkssmlmsg(text="", customspeak=False):
     message='X-RequestId:'+connectId()+'\r\nContent-Type:application/ssml+xml\r\n'
     message+='X-Timestamp:'+formatdate()+'Z\r\nPath:ssml\r\n\r\n'
-    message+="<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>"
-    message+="<voice  name='" + voice + "'>" + "<prosody pitch='" + pitchString + "' rate ='" + rateString + "' volume='" + volumeString + "'>" + text + '</prosody></voice></speak>'
+    if customspeak:
+        message+=text
+    else:
+        message+="<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>"
+        message+="<voice  name='" + voice + "'>" + "<prosody pitch='" + pitchString + "' rate ='" + rateString + "' volume='" + volumeString + "'>" + text + '</prosody></voice></speak>'
     return message
 
 async def run_tts(msg):
@@ -120,6 +123,7 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-t', '--text', help='what TTS will say')
     group.add_argument('-f', '--file', help='same as --text but read from file')
+    parser.add_argument('-z', '--custom-ssml', help='treat text as ssml to send. For more info check https://bit.ly/3fIq13S', action='store_true')
     parser.add_argument('-v', '--voice', help='voice for TTS. Default: en-US-AriaNeural', default='en-US-AriaNeural')
     parser.add_argument('-c', '--codec', help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. Another choice is webm-24khz-16bit-mono-opus", default='audio-24khz-48kbitrate-mono-mp3')
     group.add_argument('-l', '--list-voices', help="lists available voices. Edge's list is incomplete so check https://bit.ly/2SFq1d3", action='store_true')
@@ -152,9 +156,12 @@ if __name__ == "__main__":
         wordBoundaryEnabled = 'true' if args.enable_word_boundary else 'false'
         # https://hpbn.co/websocket/ says client must also send a masking key,
         # which adds an extra 4 bytes to the header, resulting in 6–14 bytes over overhead
-        overhead = len(mkssmlmsg()) + 14
-        wsmax = 65536 - overhead
-        for text in _minimize(escape(removeIncompatibleControlChars(args.text)), " ", wsmax):
-            asyncio.get_event_loop().run_until_complete(run_tts(mkssmlmsg(text)))
+        if args.custom_ssml:
+            asyncio.get_event_loop().run_until_complete(run_tts(mkssmlmsg(text=args.text, customspeak=True)))
+        else:
+            overhead = len(mkssmlmsg()) + 14
+            wsmax = 65536 - overhead
+            for text in _minimize(escape(removeIncompatibleControlChars(args.text)), " ", wsmax):
+                asyncio.get_event_loop().run_until_complete(run_tts(mkssmlmsg(text)))
     elif args.list_voices:
         list_voices()
