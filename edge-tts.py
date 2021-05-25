@@ -38,7 +38,7 @@ def removeIncompatibleControlChars(s):
 def list_voices():
     with urllib.request.urlopen(voiceList) as url:
         debug("Loading json from %s" % voiceList)
-        data = json.loads(url.read().decode())
+        data = json.loads(url.read().decode('utf-8'))
         debug("JSON Loaded")
         for voice in data:
             print()
@@ -69,37 +69,20 @@ async def run_tts(msg):
         debug("> %s" % message)
         await ws.send(msg)
         debug("> %s" % msg)
-        while True:
-            recv = await ws.recv()
-            recv = recv.encode() if type(recv) is not bytes else recv
+        async for recv in ws:
+            recv = recv.encode('utf-8') if type(recv) is not bytes else recv
             debug("< %s" % recv)
             if b'turn.end' in recv:
-                break
+                await ws.close()
             elif b'Path:audio\r\n' in recv:
                 sys.stdout.buffer.write(recv.split(b'Path:audio\r\n')[1])
 
-# From https://github.com/pndurette/gTTS/blob/6d9309f05b3ad26ca356654732f3b5b9c3bec538/gtts/utils.py#L13-L54
+# Based on https://github.com/pndurette/gTTS/blob/6d9309f05b3ad26ca356654732f3b5b9c3bec538/gtts/utils.py#L13-L54
+# Modified to measure based on bytes rather than number of characters
 def _minimize(the_string, delim, max_size):
-    """Recursively split a string in the largest chunks
-    possible from the highest position of a delimiter all the way
-    to a maximum size
-    Args:
-        the_string (string): The string to split.
-        delim (string): The delimiter to split on.
-        max_size (int): The maximum size of a chunk.
-    Returns:
-        list: the minimized string in tokens
-    Every chunk size will be at minimum ``the_string[0:idx]`` where ``idx``
-    is the highest index of ``delim`` found in ``the_string``; and at maximum
-    ``the_string[0:max_size]`` if no ``delim`` was found in ``the_string``.
-    In the latter case, the split will occur at ``the_string[max_size]``
-    which can be any character. The function runs itself again on the rest of
-    ``the_string`` (``the_string[idx:]``) until no chunk is larger than
-    ``max_size``.
-    """
-    # Remove `delim` from start of `the_string`
-    # i.e. prevent a recursive infinite loop on `the_string[0:0]`
-    # if `the_string` starts with `delim` and is larger than `max_size`
+    # Make sure we are measuring based on bytes
+    the_string = the_string.encode('utf-8') if type(the_string) is str else the_string
+
     if the_string.startswith(delim):
         the_string = the_string[len(delim):]
 
@@ -154,14 +137,12 @@ if __name__ == "__main__":
         volumeString = args.volume
         sentenceBoundaryEnabled = 'true' if args.enable_sentence_boundary else 'false'
         wordBoundaryEnabled = 'true' if args.enable_word_boundary else 'false'
-        # https://hpbn.co/websocket/ says client must also send a masking key,
-        # which adds an extra 4 bytes to the header, resulting in 6–14 bytes over overhead
         if args.custom_ssml:
             asyncio.get_event_loop().run_until_complete(run_tts(mkssmlmsg(text=args.text, customspeak=True)))
         else:
-            overhead = len(mkssmlmsg()) + 14
+            overhead = len(mkssmlmsg().encode('utf-8'))
             wsmax = 65536 - overhead
-            for text in _minimize(escape(removeIncompatibleControlChars(args.text)), " ", wsmax):
-                asyncio.get_event_loop().run_until_complete(run_tts(mkssmlmsg(text)))
+            for text in _minimize(escape(removeIncompatibleControlChars(args.text)), b" ", wsmax):
+                asyncio.get_event_loop().run_until_complete(run_tts(mkssmlmsg(text.decode('utf-8'))))
     elif args.list_voices:
         list_voices()
