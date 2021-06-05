@@ -102,7 +102,7 @@ async def main():
         "--log-level",
         default=logging.CRITICAL,
         type=lambda x: getattr(logging, x),
-        help="Configure the logging level."
+        help="configure the logging level (currently only DEBUG supported)"
     )
     parser.add_argument('-z', '--custom-ssml', help='treat text as ssml to send. For more info check https://bit.ly/3fIq13S', action='store_true')
     parser.add_argument('-v', '--voice', help='voice for TTS. Default: en-US-AriaNeural', default='en-US-AriaNeural')
