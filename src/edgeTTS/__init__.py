@@ -92,7 +92,7 @@ def _minimize(the_string, delim, max_size):
     else:
         return [the_string]
 
-async def main():
+async def _main():
     parser = argparse.ArgumentParser(description="Microsoft Edge's Online TTS Reader")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-t', '--text', help='what TTS will say')
@@ -147,8 +147,11 @@ async def main():
                 print("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
             seperator = True
 
-if __name__ == "__main__":
-    def terminator(signo, stack_frame): sys.exit()
+def terminator(signo, stack_frame): sys.exit()
+def main():
     signal.signal(signal.SIGINT, terminator)
     signal.signal(signal.SIGTERM, terminator)
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.get_event_loop().run_until_complete(_main())
+
+if __name__ == "__main__":
+    main()

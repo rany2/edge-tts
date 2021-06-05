@@ -1,12 +1,14 @@
 **
-!edge-playback.sh
-!edge-tts.py
-!example
-!example/**
-!LICENSE
-!README.md
-!setup.py
+# Directories
+!bin
+!bin/**
+!examples
+!examples/**
 !src
 !src/edgeTTS
 !src/edgeTTS/**
-!requirements.txt
+# Files
+!LICENSE
+!README.md
+!setup.cfg
+!setup.py
