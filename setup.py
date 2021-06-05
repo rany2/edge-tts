@@ -14,9 +14,12 @@ if os.name == 'posix':
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
 setuptools.setup(
     name="edge-tts",
-    version="0.0.2",
+    version="0.0.3",
     author="rany",
     author_email="ranygh@riseup.net",
     description="Microsoft Edge's TTS",
@@ -35,4 +38,5 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     scripts=scripts,
     python_requires=">=3.6",
+    install_requires=required,
 )

@@ -9,3 +9,4 @@
 !src
 !src/edgeTTS
 !src/edgeTTS/**
+!requirements.txt
