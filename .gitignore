@@ -1,7 +1,10 @@
 **
-!install.sh
-!easy-playback.sh
+!edge-playback.sh
 !edge-tts.py
-!edgeTTS.py
+!example
+!example/**
 !LICENSE
-!.gitignore
+!README.md
+!setup.py
+!src
+!src/**
