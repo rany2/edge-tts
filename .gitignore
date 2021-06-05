@@ -1,14 +1,8 @@
 **
-# Directories
-!bin
-!bin/**
-!examples
-!examples/**
-!src
-!src/edgeTTS
-!src/edgeTTS/**
-# Files
+!bin/edge-playback
+!examples/input_example.py
 !LICENSE
 !README.md
 !setup.cfg
 !setup.py
+!src/edgeTTS/__init__.py
