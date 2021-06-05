@@ -9,6 +9,7 @@ import asyncio
 import ssl
 import websockets
 import unicodedata
+import logging
 from email.utils import formatdate
 from xml.sax.saxutils import escape
 
@@ -17,8 +18,6 @@ trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
 wssUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + trustedClientToken
 voiceList = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=' + trustedClientToken
 
-def debug(msg, fd=sys.stderr):
-    if DEBUG: print(msg, file=fd)
 def terminator(signo, stack_frame): sys.exit()
 signal.signal(signal.SIGINT, terminator)
 signal.signal(signal.SIGTERM, terminator)
@@ -37,12 +36,12 @@ def removeIncompatibleControlChars(s):
 
 def list_voices():
     with urllib.request.urlopen(voiceList) as url:
-        debug("Loading json from %s" % voiceList)
+        logging.debug("Loading json from %s" % voiceList)
         data = json.loads(url.read().decode('utf-8'))
-        debug("JSON Loaded")
+        logging.debug("JSON Loaded")
     return data
 
-def mkssmlmsg(text="", voice="", pitchString="", rateString="", volumeString="", customspeak=False):
+def mkssmlmsg(text="", voice="en-US-AriaNeural", pitchString="+0Hz", rateString="+0%", volumeString="+0%", customspeak=False):
     message='X-RequestId:'+connectId()+'\r\nContent-Type:application/ssml+xml\r\n'
     message+='X-Timestamp:'+formatdate()+'Z\r\nPath:ssml\r\n\r\n'
     if customspeak:
@@ -52,18 +51,18 @@ def mkssmlmsg(text="", voice="", pitchString="", rateString="", volumeString="",
         message+="<voice  name='" + voice + "'>" + "<prosody pitch='" + pitchString + "' rate ='" + rateString + "' volume='" + volumeString + "'>" + text + '</prosody></voice></speak>'
     return message
 
-async def run_tts(msg, sentenceBoundaryEnabled="", wordBoundaryEnabled="", codec=""):
-    debug("Doing %s!" % msg)
+async def run_tts(msg, sentenceBoundaryEnabled="false", wordBoundaryEnabled="false", codec="audio-24khz-48kbitrate-mono-mp3"):
+    logging.debug("Doing %s!" % msg)
     async with websockets.connect(wssUrl, ssl=ssl_context) as ws:
         message='X-Timestamp:'+formatdate()+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
         message+='{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"'+sentenceBoundaryEnabled+'","wordBoundaryEnabled":"'+wordBoundaryEnabled+'"},"outputFormat":"' + codec + '"}}}}\r\n'
         await ws.send(message)
-        debug("> %s" % message)
+        logging.debug("> %s" % message)
         await ws.send(msg)
-        debug("> %s" % msg)
+        logging.debug("> %s" % msg)
         async for recv in ws:
             recv = recv.encode('utf-8') if type(recv) is not bytes else recv
-            debug("< %s" % recv)
+            logging.debug("< %s" % recv)
             if b'turn.end' in recv:
                 await ws.close()
             elif b'Path:audio\r\n' in recv:
@@ -98,6 +97,13 @@ async def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-t', '--text', help='what TTS will say')
     group.add_argument('-f', '--file', help='same as --text but read from file')
+    parser.add_argument(
+        "-L",
+        "--log-level",
+        default=logging.CRITICAL,
+        type=lambda x: getattr(logging, x),
+        help="Configure the logging level."
+    )
     parser.add_argument('-z', '--custom-ssml', help='treat text as ssml to send. For more info check https://bit.ly/3fIq13S', action='store_true')
     parser.add_argument('-v', '--voice', help='voice for TTS. Default: en-US-AriaNeural', default='en-US-AriaNeural')
     parser.add_argument('-c', '--codec', help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. Another choice is webm-24khz-16bit-mono-opus", default='audio-24khz-48kbitrate-mono-mp3')
@@ -105,21 +111,19 @@ async def main():
     parser.add_argument('-p', '--pitch', help="set TTS pitch. Default +0Hz, For more info check https://bit.ly/3eAE5Nx", default="+0Hz")
     parser.add_argument('-r', '--rate', help="set TTS rate. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
     parser.add_argument('-V', '--volume', help="set TTS volume. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
-    parser.add_argument('-s', '--enable-sentence-boundary', help="enable sentence boundary (not implemented but set)", action='store_true')
-    parser.add_argument('-w', '--enable-word-boundary', help="enable word boundary (not implemented but set)", action='store_true')
-    parser.add_argument('-D', '--debug', help="some debugging", action='store_true')
+    parser.add_argument('-s', '--enable-sentence-boundary', help="enable sentence boundary (not implemented but settable)", action='store_true')
+    parser.add_argument('-w', '--enable-word-boundary', help="enable word boundary (not implemented but settable)", action='store_true')
     args = parser.parse_args()
-    global DEBUG
-    DEBUG = args.debug
+    logging.basicConfig(level=args.log_level)
     if (args.text or args.file) is not None:
         if args.file is not None:
             # we need to use sys.stdin.read() because some devices
             # like Windows and Termux don't have a /dev/stdin.
             if args.file == "/dev/stdin":
-                debug("stdin detected, reading natively from stdin")
+                logging.debug("stdin detected, reading natively from stdin")
                 args.text = sys.stdin.read()
             else:
-                debug("reading from %s" % args.file)
+                logging.debug("reading from %s" % args.file)
                 with open(args.file, 'r') as file:
                     args.text = file.read()
         sentenceBoundaryEnabled = 'true' if args.enable_sentence_boundary else 'false'
@@ -128,7 +132,7 @@ async def main():
             async for i in run_tts(mkssmlmsg(text=args.text, customspeak=True), sentenceBoundaryEnabled, wordBoundaryEnabled, args.codec):
                 sys.stdout.buffer.write(i)
         else:
-            overhead = len(mkssmlmsg().encode('utf-8'))
+            overhead = len(mkssmlmsg('', args.voice, args.pitch, args.rate, args.volume).encode('utf-8'))
             wsmax = 65536 - overhead
             for text in _minimize(escape(removeIncompatibleControlChars(args.text)), b" ", wsmax):
                 async for i in run_tts(mkssmlmsg(text.decode('utf-8'), args.voice, args.pitch, args.rate, args.volume), sentenceBoundaryEnabled, wordBoundaryEnabled, args.codec):
@@ -138,9 +142,9 @@ async def main():
         for voice in list_voices():
             if seperator: print()
             for key in voice.keys():
-                debug("Processing key %s" % key)
+                logging.debug("Processing key %s" % key)
                 if key in ["Name", "SuggestedCodec", "FriendlyName", "Status"]:
-                    debug("Key %s skipped" % key)
+                    logging.debug("Key %s skipped" % key)
                     continue
                 print("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
             seperator = True

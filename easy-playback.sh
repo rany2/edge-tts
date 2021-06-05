@@ -10,7 +10,6 @@ ttsmpeg=$(mktemp)
 
 ## Cleanup function to kill all processes and remove tmp file
 quitfunc() {
-	# shellcheck disable=SC2046
 	kill -- $(jobs -p)
 	rm -f -- "${ttsmpeg:?}"
 }
