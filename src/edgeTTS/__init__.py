@@ -151,7 +151,7 @@ def terminator(signo, stack_frame): sys.exit()
 def main():
     signal.signal(signal.SIGINT, terminator)
     signal.signal(signal.SIGTERM, terminator)
-    asyncio.get_event_loop().run_until_complete(_main())
+    asyncio.run(_main())
 
 if __name__ == "__main__":
     main()
