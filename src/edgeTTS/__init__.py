@@ -18,9 +18,6 @@ trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
 wssUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + trustedClientToken
 voiceList = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=' + trustedClientToken
 
-def terminator(signo, stack_frame): sys.exit()
-signal.signal(signal.SIGINT, terminator)
-signal.signal(signal.SIGTERM, terminator)
 def connectId(): return str(uuid.uuid4()).replace("-", "")
 def removeIncompatibleControlChars(s):
     output = []
@@ -51,11 +48,14 @@ def mkssmlmsg(text="", voice="en-US-AriaNeural", pitchString="+0Hz", rateString=
         message+="<voice  name='" + voice + "'>" + "<prosody pitch='" + pitchString + "' rate ='" + rateString + "' volume='" + volumeString + "'>" + text + '</prosody></voice></speak>'
     return message
 
-async def run_tts(msg, sentenceBoundaryEnabled="false", wordBoundaryEnabled="false", codec="audio-24khz-48kbitrate-mono-mp3"):
+def bool_to_lower_str(x): return 'true' if x else 'false'
+async def run_tts(msg, sentenceBoundary=False, wordBoundary=False, codec="audio-24khz-48kbitrate-mono-mp3"):
+    sentenceBoundary = bool_to_lower_str(sentenceBoundary)
+    wordBoundary = bool_to_lower_str(wordBoundary)
     logging.debug("Doing %s!" % msg)
     async with websockets.connect(wssUrl, ssl=ssl_context) as ws:
         message='X-Timestamp:'+formatdate()+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
-        message+='{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"'+sentenceBoundaryEnabled+'","wordBoundaryEnabled":"'+wordBoundaryEnabled+'"},"outputFormat":"' + codec + '"}}}}\r\n'
+        message+='{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"'+sentenceBoundary+'","wordBoundaryEnabled":"'+wordBoundary+'"},"outputFormat":"' + codec + '"}}}}\r\n'
         await ws.send(message)
         logging.debug("> %s" % message)
         await ws.send(msg)
@@ -126,16 +126,14 @@ async def main():
                 logging.debug("reading from %s" % args.file)
                 with open(args.file, 'r') as file:
                     args.text = file.read()
-        sentenceBoundaryEnabled = 'true' if args.enable_sentence_boundary else 'false'
-        wordBoundaryEnabled = 'true' if args.enable_word_boundary else 'false'
         if args.custom_ssml:
-            async for i in run_tts(mkssmlmsg(text=args.text, customspeak=True), sentenceBoundaryEnabled, wordBoundaryEnabled, args.codec):
+            async for i in run_tts(mkssmlmsg(text=args.text, customspeak=True), args.enable_sentence_boundary, args.enable_word_boundary, args.codec):
                 sys.stdout.buffer.write(i)
         else:
             overhead = len(mkssmlmsg('', args.voice, args.pitch, args.rate, args.volume).encode('utf-8'))
             wsmax = 65536 - overhead
             for text in _minimize(escape(removeIncompatibleControlChars(args.text)), b" ", wsmax):
-                async for i in run_tts(mkssmlmsg(text.decode('utf-8'), args.voice, args.pitch, args.rate, args.volume), sentenceBoundaryEnabled, wordBoundaryEnabled, args.codec):
+                async for i in run_tts(mkssmlmsg(text.decode('utf-8'), args.voice, args.pitch, args.rate, args.volume), args.enable_sentence_boundary, args.enable_word_boundary, args.codec):
                     sys.stdout.buffer.write(i)
     elif args.list_voices:
         seperator = False
@@ -150,4 +148,7 @@ async def main():
             seperator = True
 
 if __name__ == "__main__":
+    def terminator(signo, stack_frame): sys.exit()
+    signal.signal(signal.SIGINT, terminator)
+    signal.signal(signal.SIGTERM, terminator)
     asyncio.get_event_loop().run_until_complete(main())
