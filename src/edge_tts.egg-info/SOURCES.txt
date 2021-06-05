@@ -1,8 +1,0 @@
-LICENSE
-README.md
-setup.py
-src/edgeTTS/__init__.py
-src/edge_tts.egg-info/PKG-INFO
-src/edge_tts.egg-info/SOURCES.txt
-src/edge_tts.egg-info/dependency_links.txt
-src/edge_tts.egg-info/top_level.txt

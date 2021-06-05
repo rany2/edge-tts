@@ -7,4 +7,5 @@
 !README.md
 !setup.py
 !src
-!src/**
+!src/edgeTTS
+!src/edgeTTS/**
