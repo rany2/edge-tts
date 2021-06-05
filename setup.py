@@ -1,10 +1,21 @@
+import os
+import shutil
 import setuptools
+
+# make edge-tts script
+scripts=['build/edge-tts']
+if not os.path.exists('build'):
+    os.makedirs('build')
+shutil.copyfile('src/edgeTTS/__init__.py', 'build/edge-tts')
+if os.name == 'posix':
+    shutil.copyfile('edge-playback.sh', 'build/edge-playback')
+    scripts+=['build/edge-playback']
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="edgeTTS-rany",
+    name="edgeTTS",
     version="0.0.1",
     author="rany",
     author_email="ranygh@riseup.net",
@@ -22,5 +33,6 @@ setuptools.setup(
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
+    scripts=scripts,
     python_requires=">=3.6",
 )
