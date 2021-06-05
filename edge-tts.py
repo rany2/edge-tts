@@ -40,17 +40,9 @@ def list_voices():
         debug("Loading json from %s" % voiceList)
         data = json.loads(url.read().decode('utf-8'))
         debug("JSON Loaded")
-        for voice in data:
-            print()
-            for key in voice.keys():
-                debug("Processing key %s" % key)
-                if key in ["Name", "SuggestedCodec", "FriendlyName", "Status"]:
-                    debug("Key %s skipped" % key)
-                    continue
-                print("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
-    print()
+    return data
 
-def mkssmlmsg(text="", customspeak=False):
+def mkssmlmsg(text="", voice="", pitchString="", rateString="", volumeString="", customspeak=False):
     message='X-RequestId:'+connectId()+'\r\nContent-Type:application/ssml+xml\r\n'
     message+='X-Timestamp:'+formatdate()+'Z\r\nPath:ssml\r\n\r\n'
     if customspeak:
@@ -60,7 +52,7 @@ def mkssmlmsg(text="", customspeak=False):
         message+="<voice  name='" + voice + "'>" + "<prosody pitch='" + pitchString + "' rate ='" + rateString + "' volume='" + volumeString + "'>" + text + '</prosody></voice></speak>'
     return message
 
-async def run_tts(msg):
+async def run_tts(msg, sentenceBoundaryEnabled="", wordBoundaryEnabled="", codec=""):
     debug("Doing %s!" % msg)
     async with websockets.connect(wssUrl, ssl=ssl_context) as ws:
         message='X-Timestamp:'+formatdate()+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
@@ -75,7 +67,7 @@ async def run_tts(msg):
             if b'turn.end' in recv:
                 await ws.close()
             elif b'Path:audio\r\n' in recv:
-                sys.stdout.buffer.write(recv.split(b'Path:audio\r\n')[1])
+                yield b"".join(recv.split(b'Path:audio\r\n')[1:])
 
 # Based on https://github.com/pndurette/gTTS/blob/6d9309f05b3ad26ca356654732f3b5b9c3bec538/gtts/utils.py#L13-L54
 # Modified to measure based on bytes rather than number of characters
@@ -101,7 +93,7 @@ def _minimize(the_string, delim, max_size):
     else:
         return [the_string]
 
-if __name__ == "__main__":
+async def main():
     parser = argparse.ArgumentParser(description="Microsoft Edge's Online TTS Reader")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-t', '--text', help='what TTS will say')
@@ -117,8 +109,8 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--enable-word-boundary', help="enable word boundary (not implemented but set)", action='store_true')
     parser.add_argument('-D', '--debug', help="some debugging", action='store_true')
     args = parser.parse_args()
+    global DEBUG
     DEBUG = args.debug
-
     if (args.text or args.file) is not None:
         if args.file is not None:
             # we need to use sys.stdin.read() because some devices
@@ -130,19 +122,28 @@ if __name__ == "__main__":
                 debug("reading from %s" % args.file)
                 with open(args.file, 'r') as file:
                     args.text = file.read()
-        codec = args.codec
-        voice = args.voice
-        pitchString = args.pitch
-        rateString = args.rate
-        volumeString = args.volume
         sentenceBoundaryEnabled = 'true' if args.enable_sentence_boundary else 'false'
         wordBoundaryEnabled = 'true' if args.enable_word_boundary else 'false'
         if args.custom_ssml:
-            asyncio.get_event_loop().run_until_complete(run_tts(mkssmlmsg(text=args.text, customspeak=True)))
+            async for i in run_tts(mkssmlmsg(text=args.text, customspeak=True), sentenceBoundaryEnabled, wordBoundaryEnabled, args.codec):
+                sys.stdout.buffer.write(i)
         else:
             overhead = len(mkssmlmsg().encode('utf-8'))
             wsmax = 65536 - overhead
             for text in _minimize(escape(removeIncompatibleControlChars(args.text)), b" ", wsmax):
-                asyncio.get_event_loop().run_until_complete(run_tts(mkssmlmsg(text.decode('utf-8'))))
+                async for i in run_tts(mkssmlmsg(text.decode('utf-8'), args.voice, args.pitch, args.rate, args.volume), sentenceBoundaryEnabled, wordBoundaryEnabled, args.codec):
+                    sys.stdout.buffer.write(i)
     elif args.list_voices:
-        list_voices()
+        seperator = False
+        for voice in list_voices():
+            if seperator: print()
+            for key in voice.keys():
+                debug("Processing key %s" % key)
+                if key in ["Name", "SuggestedCodec", "FriendlyName", "Status"]:
+                    debug("Key %s skipped" % key)
+                    continue
+                print("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
+            seperator = True
+
+if __name__ == "__main__":
+    asyncio.get_event_loop().run_until_complete(main())
