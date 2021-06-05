@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: edgeTTS
+Version: 0.0.1
+Summary: Microsoft Edge's TTS
+Home-page: https://github.com/rany2/edge-tts
+Author: rany
+Author-email: ranygh@riseup.net
+License: UNKNOWN
+Project-URL: Bug Tracker, https://github.com/rany2/edge-tts/issues
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# edge-tts
+
+Use Microsoft Edge's Online TTS from the Terminal or as a python module.
+
+
