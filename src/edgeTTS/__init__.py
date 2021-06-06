@@ -7,7 +7,6 @@ import argparse
 import asyncio
 import ssl
 import websockets
-import unicodedata
 import logging
 import httpx
 from email.utils import formatdate
@@ -18,17 +17,18 @@ trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
 wssUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + trustedClientToken
 voiceList = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=' + trustedClientToken
 
-def connectId(): return str(uuid.uuid4()).replace("-", "")
+def connectId():
+    return str(uuid.uuid4()).replace("-", "")
+
 def removeIncompatibleControlChars(s):
     output = []
-    for ch in s:
-        # We consider that these control characters are whitespace
-        if ch in ['\t','\n','\r']:
-            pass
+    for char in s:
+        char_code = ord(char)
+        if (char_code >= 0 and char_code <= 8) or (char_code >= 11 and char_code <= 12) \
+                or (char_code >= 14 and char_code <= 31):
+            output += [ ' ' ]
         else:
-            abr = unicodedata.category(ch)
-            if abr.startswith("C"): continue
-        output += [ ch ]
+            output += [ char ]
     return "".join(output)
 
 def list_voices():
