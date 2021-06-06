@@ -32,10 +32,20 @@ def removeIncompatibleControlChars(s):
     return "".join(output)
 
 def list_voices():
-    with urllib.request.urlopen(voiceList) as url:
-        logging.debug("Loading json from %s" % voiceList)
-        data = json.loads(url.read().decode('utf-8'))
-        logging.debug("JSON Loaded")
+    req = urllib.request.Request(voiceList)
+    req.add_header('Authority', 'speech.platform.bing.com')
+    req.add_header('Host', 'speech.platform.bing.com')
+    req.add_header('Sec-CH-UA', "\" Not;A Brand\";v=\"99\", \"Microsoft Edge\";v=\"91\", \"Chromium\";v=\"91\"")
+    req.add_header('Sec-CH-UA-Mobile', '?0')
+    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41')
+    req.add_header('Accept', '*/*')
+    req.add_header('Sec-Fetch-Site', 'none')
+    req.add_header('Sec-Fetch-Mode', 'cors')
+    req.add_header('Sec-Fetch-Dest', 'empty')
+    req.add_header('Accept-Language', 'en-US,en;q=0.9')
+    logging.debug("Loading json from %s" % voiceList)
+    data = json.loads(urllib.request.urlopen(req).read())
+    logging.debug("JSON Loaded")
     return data
 
 def mkssmlmsg(text="", voice="en-US-AriaNeural", pitchString="+0Hz", rateString="+0%", volumeString="+0%", customspeak=False):
@@ -53,7 +63,19 @@ async def run_tts(msg, sentenceBoundary=False, wordBoundary=False, codec="audio-
     sentenceBoundary = bool_to_lower_str(sentenceBoundary)
     wordBoundary = bool_to_lower_str(wordBoundary)
     logging.debug("Doing %s!" % msg)
-    async with websockets.connect(wssUrl, ssl=ssl_context) as ws:
+    # yes, the connectid() in websockets.connect is different
+    async with websockets.connect(
+        wssUrl + "&ConnectionId=" + connectId(),
+        ssl=ssl_context,
+        compression="deflate",
+        extra_headers={
+            "Pragma": "no-cache",
+            "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
+            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
+            "Cache-Control": "no-cache"
+        }
+    ) as ws:
         message='X-Timestamp:'+formatdate()+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
         message+='{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"'+sentenceBoundary+'","wordBoundaryEnabled":"'+wordBoundary+'"},"outputFormat":"' + codec + '"}}}}\r\n'
         await ws.send(message)
