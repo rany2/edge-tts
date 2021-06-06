@@ -4,12 +4,12 @@ import json
 import uuid
 import signal
 import argparse
-import urllib.request
 import asyncio
 import ssl
 import websockets
 import unicodedata
 import logging
+import httpx
 from email.utils import formatdate
 from xml.sax.saxutils import escape
 
@@ -32,20 +32,21 @@ def removeIncompatibleControlChars(s):
     return "".join(output)
 
 def list_voices():
-    req = urllib.request.Request(voiceList)
-    req.add_header('Authority', 'speech.platform.bing.com')
-    req.add_header('Host', 'speech.platform.bing.com')
-    req.add_header('Sec-CH-UA', "\" Not;A Brand\";v=\"99\", \"Microsoft Edge\";v=\"91\", \"Chromium\";v=\"91\"")
-    req.add_header('Sec-CH-UA-Mobile', '?0')
-    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41')
-    req.add_header('Accept', '*/*')
-    req.add_header('Sec-Fetch-Site', 'none')
-    req.add_header('Sec-Fetch-Mode', 'cors')
-    req.add_header('Sec-Fetch-Dest', 'empty')
-    req.add_header('Accept-Language', 'en-US,en;q=0.9')
-    logging.debug("Loading json from %s" % voiceList)
-    data = json.loads(urllib.request.urlopen(req).read())
-    logging.debug("JSON Loaded")
+    with httpx.Client(http2=True, headers={
+            'Authority': 'speech.platform.bing.com',
+            'Host': 'speech.platform.bing.com',
+            'Sec-CH-UA': "\" Not;A Brand\";v=\"99\", \"Microsoft Edge\";v=\"91\", \"Chromium\";v=\"91\"",
+            'Sec-CH-UA-Mobile': '?0',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41',
+            'Accept': '*/*',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Dest': 'empty',
+            'Accept-Language': 'en-US,en;q=0.9'
+    }) as url:
+        logging.debug("Loading json from %s" % voiceList)
+        data = json.loads(url.get(voiceList).content)
+        logging.debug("JSON Loaded")
     return data
 
 def mkssmlmsg(text="", voice="en-US-AriaNeural", pitchString="+0Hz", rateString="+0%", volumeString="+0%", customspeak=False):
