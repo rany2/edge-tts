@@ -63,7 +63,6 @@ def bool_to_lower_str(x): return 'true' if x else 'false'
 async def run_tts(msg, sentenceBoundary=False, wordBoundary=False, codec="audio-24khz-48kbitrate-mono-mp3"):
     sentenceBoundary = bool_to_lower_str(sentenceBoundary)
     wordBoundary = bool_to_lower_str(wordBoundary)
-    logging.debug("Doing %s!" % msg)
     # yes, the connectid() in websockets.connect is different
     async with websockets.connect(
         wssUrl + "&ConnectionId=" + connectId(),
@@ -80,16 +79,22 @@ async def run_tts(msg, sentenceBoundary=False, wordBoundary=False, codec="audio-
         message='X-Timestamp:'+formatdate()+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
         message+='{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"'+sentenceBoundary+'","wordBoundaryEnabled":"'+wordBoundary+'"},"outputFormat":"' + codec + '"}}}}\r\n'
         await ws.send(message)
-        logging.debug("> %s" % message)
         await ws.send(msg)
-        logging.debug("> %s" % msg)
+        download = False
         async for recv in ws:
-            recv = recv.encode('utf-8') if type(recv) is not bytes else recv
-            logging.debug("< %s" % recv)
-            if b'turn.end' in recv:
-                await ws.close()
-            elif b'Path:audio\r\n' in recv:
-                yield b"".join(recv.split(b'Path:audio\r\n')[1:])
+            if type(recv) is str:
+                if 'turn.start' in recv:
+                    download = True
+                elif 'turn.end' in recv:
+                    download = False
+                    await ws.close()
+                # TODO: add some sort of captioning based on audio:metadata. It's just JSON with offset.
+                # WordBoundary is the only thing supported. SentenceBoundary does nothing.
+                #elif 'audio.metadata' in recv:
+                #    print("".join(recv.split('Path:audio.metadata\r\n\r\n')[1:]), file=sys.stderr)
+            elif type(recv) is bytes:
+                if download:
+                    yield b"".join(recv.split(b'Path:audio\r\n')[1:])
 
 # Based on https://github.com/pndurette/gTTS/blob/6d9309f05b3ad26ca356654732f3b5b9c3bec538/gtts/utils.py#L13-L54
 # Modified to measure based on bytes rather than number of characters
