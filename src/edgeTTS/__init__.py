@@ -2,7 +2,6 @@
 import sys
 import json
 import uuid
-import signal
 import argparse
 import asyncio
 import ssl
@@ -12,6 +11,7 @@ import httpx
 from email.utils import formatdate
 from xml.sax.saxutils import escape
 
+# Default variables
 ssl_context = ssl.create_default_context()
 trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
 wssUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + trustedClientToken
@@ -21,35 +21,40 @@ def connectId():
     return str(uuid.uuid4()).replace("-", "")
 
 def removeIncompatibleControlChars(s):
-    output = []
+    logger = logging.getLogger("edgeTTS.removeIncompatibleControlChars")
+    output = ""
     for char in s:
         char_code = ord(char)
         if (char_code >= 0 and char_code <= 8) or (char_code >= 11 and char_code <= 12) \
                 or (char_code >= 14 and char_code <= 31):
-            output += [ ' ' ]
+            logger.debug("Forbidden character %s" % char.encode('utf-8'))
+            output += ' '
         else:
-            output += [ char ]
-    return "".join(output)
+            logger.debug("Allowed character %s" % char.encode('utf-8'))
+            output += char
+    logger.debug("Generated %s" % output.encode('utf-8'))
+    return output
 
 def list_voices():
+    logger = logging.getLogger("edgeTTS.list_voices")
     with httpx.Client(http2=True, headers={
             'Authority': 'speech.platform.bing.com',
-            'Host': 'speech.platform.bing.com',
             'Sec-CH-UA': "\" Not;A Brand\";v=\"99\", \"Microsoft Edge\";v=\"91\", \"Chromium\";v=\"91\"",
             'Sec-CH-UA-Mobile': '?0',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41',
+            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
             'Accept': '*/*',
             'Sec-Fetch-Site': 'none',
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Dest': 'empty',
+            'Accept-Encoding': 'gzip, deflate, br',
             'Accept-Language': 'en-US,en;q=0.9'
     }) as url:
-        logging.debug("Loading json from %s" % voiceList)
+        logger.debug("Loading json from %s" % voiceList)
         data = json.loads(url.get(voiceList).content)
-        logging.debug("JSON Loaded")
+        logger.debug("JSON Loaded")
     return data
 
-def mkssmlmsg(text="", voice="en-US-AriaNeural", pitchString="+0Hz", rateString="+0%", volumeString="+0%", customspeak=False):
+def mkssmlmsg(text="", voice="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)", pitchString="+0Hz", rateString="+0%", volumeString="+0%", customspeak=False):
     message='X-RequestId:'+connectId()+'\r\nContent-Type:application/ssml+xml\r\n'
     message+='X-Timestamp:'+formatdate()+'Z\r\nPath:ssml\r\n\r\n'
     if customspeak:
@@ -71,8 +76,9 @@ async def run_tts(msg, sentenceBoundary=False, wordBoundary=False, codec="audio-
         extra_headers={
             "Pragma": "no-cache",
             "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
+            "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
             "Cache-Control": "no-cache"
         }
     ) as ws:
@@ -133,7 +139,7 @@ async def _main():
         help="configure the logging level (currently only DEBUG supported)"
     )
     parser.add_argument('-z', '--custom-ssml', help='treat text as ssml to send. For more info check https://bit.ly/3fIq13S', action='store_true')
-    parser.add_argument('-v', '--voice', help='voice for TTS. Default: en-US-AriaNeural', default='en-US-AriaNeural')
+    parser.add_argument('-v', '--voice', help='voice for TTS. Default: Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)', default='Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)')
     parser.add_argument('-c', '--codec', help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. Another choice is webm-24khz-16bit-mono-opus. For more info check https://bit.ly/2T33h6S", default='audio-24khz-48kbitrate-mono-mp3')
     group.add_argument('-l', '--list-voices', help="lists available voices. Edge's list is incomplete so check https://bit.ly/2SFq1d3", action='store_true')
     parser.add_argument('-p', '--pitch', help="set TTS pitch. Default +0Hz, For more info check https://bit.ly/3eAE5Nx", default="+0Hz")
@@ -143,15 +149,16 @@ async def _main():
     parser.add_argument('-w', '--enable-word-boundary', help="enable word boundary (not implemented but settable)", action='store_true')
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
+    logger = logging.getLogger("edgeTTS._main")
     if (args.text or args.file) is not None:
         if args.file is not None:
             # we need to use sys.stdin.read() because some devices
             # like Windows and Termux don't have a /dev/stdin.
             if args.file == "/dev/stdin":
-                logging.debug("stdin detected, reading natively from stdin")
+                logger.debug("stdin detected, reading natively from stdin")
                 args.text = sys.stdin.read()
             else:
-                logging.debug("reading from %s" % args.file)
+                logger.debug("reading from %s" % args.file)
                 with open(args.file, 'r') as file:
                     args.text = file.read()
         if args.custom_ssml:
@@ -168,17 +175,15 @@ async def _main():
         for voice in list_voices():
             if seperator: print()
             for key in voice.keys():
-                logging.debug("Processing key %s" % key)
-                if key in ["Name", "SuggestedCodec", "FriendlyName", "Status"]:
-                    logging.debug("Key %s skipped" % key)
+                logger.debug("Processing key %s" % key)
+                if key in ["SuggestedCodec", "FriendlyName", "Status"]:
+                    logger.debug("Key %s skipped" % key)
                     continue
-                print("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
+                #print ("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
+                print ("%s: %s" % (key, voice[key]))
             seperator = True
 
-def terminator(signo, stack_frame): sys.exit()
 def main():
-    signal.signal(signal.SIGINT, terminator)
-    signal.signal(signal.SIGTERM, terminator)
     asyncio.run(_main())
 
 if __name__ == "__main__":

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-
 # Example Python script that shows how to use edge-tts as a module
-
 import asyncio
 import tempfile
 import edgeTTS as e
