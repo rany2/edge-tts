@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-unset stdin
-if [ "$1" == "stdin" ]
+media=$(mktemp)
+subs=$(mktemp)
+echo ""
+echo "Media file: $media"
+echo "Subtitle file: $subs"
+echo ""
+if [ "$1" == "NO_DELETE" ]
 then
-	stdin=$(cat)
 	shift 1
-	edge-tts -f <(printf '%s' "$stdin") "$@" | mpv --keep-open=yes -
 else
-	edge-tts "$@" | mpv --keep-open=yes -
+	trap 'rm -f "${media:?}" "${subs:?}"' EXIT
 fi
+edge-tts -w "$@" >"$media" 2>"$subs"
+mpv --keep-open=yes --sub-file="$subs" "$media"
