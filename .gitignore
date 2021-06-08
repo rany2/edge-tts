@@ -1,5 +1,5 @@
 **
-!bin/edge-playback
+!examples/
 !examples/input_example.py
 !LICENSE
 !README.md
@@ -7,6 +7,7 @@
 !setup.py
 !pyproject.toml
 !src/
+!src/edgeTTS/
 !src/edgeTTS/__init__.py
 !src/edgePlayback/
 !src/edgePlayback/__init__.py
