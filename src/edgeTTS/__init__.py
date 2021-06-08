@@ -71,8 +71,9 @@ def list_voices():
     return data
 
 class SubMaker:
-    def __init__(self):
+    def __init__(self, overlapping=5):
         self.subsAndOffset = {}
+        self.overlapping = (overlapping * (10**7))
 
     def formatter(self, offset1, offset2, subdata):
         data = "%s --> %s\r\n" % (mktimestamp(offset1), mktimestamp(offset2))
@@ -85,18 +86,20 @@ class SubMaker:
     def generateSubs(self):
         oldTimeStamp = None
         oldSubData = None
-        data = "WEBVTT\r\n"
+        data = "WEBVTT\r\n\r\n"
         first = sorted(self.subsAndOffset.keys(), key=int)[0]
-        data += self.formatter(0, first, self.subsAndOffset[first])
         try:
-            for sub in sorted(self.subsAndOffset.keys(), key=int)[1:]:
-                if (oldTimeStamp and oldSubData) is not None:
-                    data += self.formatter(oldTimeStamp, sub, oldSubData)
-                oldTimeStamp = sub
-                oldSubData = self.subsAndOffset[sub]
+            second = sorted(self.subsAndOffset.keys(), key=int)[1]
+            data += self.formatter(first, second + self.overlapping, self.subsAndOffset[first]) ## overlapping Subtitles
+        except IndexError: # This means TTS said one word only.
+            data += self.formatter(0, first + ((10**7) * 10), self.subsAndOffset[first])
+        for sub in sorted(self.subsAndOffset.keys(), key=int)[1:]:
+            if (oldTimeStamp and oldSubData) is not None:
+                data += self.formatter(oldTimeStamp, sub + self.overlapping, oldSubData) ## overlapping Subtitles
+            oldTimeStamp = sub
+            oldSubData = self.subsAndOffset[sub]
+        if (oldTimeStamp and oldSubData) is not None:
             data += self.formatter(oldTimeStamp, oldTimeStamp + ((10**7) * 10), oldSubData)
-        except:
-            pass
         return data
 
 class Communicate:
@@ -113,7 +116,7 @@ class Communicate:
             message+="<voice  name='" + voice + "'>" + "<prosody pitch='" + pitch + "' rate ='" + rate + "' volume='" + volume + "'>" + text + '</prosody></voice></speak>'
         return message
 
-    async def run(self, msg, sentenceBoundary=False, wordBoundary=False, codec="webm-24khz-16bit-mono-opus", voice="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)", pitch="+0Hz", rate="+0%", volume="+0%", customspeak=False):
+    async def run(self, msg, sentenceBoundary=False, wordBoundary=False, codec="audio-24khz-48kbitrate-mono-mp3", voice="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)", pitch="+0Hz", rate="+0%", volume="+0%", customspeak=False):
         sentenceBoundary = bool_to_lower_str(sentenceBoundary)
         wordBoundary = bool_to_lower_str(wordBoundary)
 
@@ -205,13 +208,14 @@ async def _main():
     )
     parser.add_argument('-z', '--custom-ssml', help='treat text as ssml to send. For more info check https://bit.ly/3fIq13S', action='store_true')
     parser.add_argument('-v', '--voice', help='voice for TTS. Default: Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)', default='Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)')
-    parser.add_argument('-c', '--codec', help="codec format. Default: webm-24khz-16bit-mono-opus. Another choice is audio-24khz-48kbitrate-mono-mp3. For more info check https://bit.ly/2T33h6S", default='webm-24khz-16bit-mono-opus')
+    parser.add_argument('-c', '--codec', help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. Another choice is webm-24khz-16bit-mono-opus. For more info check https://bit.ly/2T33h6S", default='audio-24khz-48kbitrate-mono-mp3')
     group.add_argument('-l', '--list-voices', help="lists available voices. Edge's list is incomplete so check https://bit.ly/2SFq1d3", action='store_true')
     parser.add_argument('-p', '--pitch', help="set TTS pitch. Default +0Hz, For more info check https://bit.ly/3eAE5Nx", default="+0Hz")
     parser.add_argument('-r', '--rate', help="set TTS rate. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
     parser.add_argument('-V', '--volume', help="set TTS volume. Default +0%%. For more info check https://bit.ly/3eAE5Nx", default="+0%")
     parser.add_argument('-s', '--enable-sentence-boundary', help="enable sentence boundary (not implemented but settable)", action='store_true')
     parser.add_argument('-w', '--enable-word-boundary', help="enable word boundary (not implemented but settable)", action='store_true')
+    parser.add_argument('-O', '--overlapping', help="overlapping subtitles in seconds", default=5)
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
     logger = logging.getLogger("edgeTTS._main")
@@ -227,7 +231,7 @@ async def _main():
                 with open(args.file, 'r') as file:
                     args.text = file.read()
         tts = Communicate()
-        subs = SubMaker()
+        subs = SubMaker(args.overlapping)
         async for i in tts.run(args.text, args.enable_sentence_boundary, args.enable_word_boundary, args.codec, args.voice, args.pitch, args.rate, args.volume, customspeak=args.custom_ssml):
             if i[2] is not None:
                 sys.stdout.buffer.write(i[2])
