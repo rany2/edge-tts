@@ -6,6 +6,7 @@
 !setup.cfg
 !setup.py
 !pyproject.toml
+!src/
 !src/edgeTTS/__init__.py
 !src/edgePlayback/
 !src/edgePlayback/__init__.py
