@@ -49,9 +49,8 @@ def removeIncompatibleControlChars(s):
 def mktimestamp(ns):
     hour = math.floor(ns / 10000 / 1000 / 3600)
     minute = math.floor((ns / 10000 / 1000 / 60) % 60)
-    seconds = math.floor((ns / 10000 / 1000) % 60)
-    mili = float(str(math.modf((ns / 10000) - (1000 * seconds))[1])[:3])
-    return "%.02d:%.02d:%.02d.%.03d" % (hour, minute, seconds, mili)
+    seconds = (ns / 10000 / 1000) % 60
+    return "%.02d:%.02d:%06.3f" % (hour, minute, seconds)
 
 # Return loaded JSON data of list of Edge's voices
 # NOTE: It's not the total list of available voices.
