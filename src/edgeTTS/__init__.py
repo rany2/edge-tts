@@ -127,7 +127,7 @@ class Communicate:
         if not customspeak:
             wsmax = 2 ** 16
             overhead = len(self.mkssmlmsg("", voice, pitch, rate, volume, customspeak=False).encode('utf-8'))
-            msgs = _minimize(escape(removeIncompatibleControlChars(msg)), b" ", wsmax - overhead)
+            msgs = _minimize(escape(removeIncompatibleControlChars(msgs)), b" ", wsmax - overhead)
         else:
             if type(msgs) is str:
                 msgs = [msgs]
