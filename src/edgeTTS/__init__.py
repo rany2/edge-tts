@@ -120,7 +120,7 @@ class Communicate:
             message+="<voice  name='" + voice + "'>" + "<prosody pitch='" + pitch + "' rate ='" + rate + "' volume='" + volume + "'>" + text + '</prosody></voice></speak>'
         return message
 
-    async def run(self, msg, sentenceBoundary=False, wordBoundary=False, codec="audio-24khz-48kbitrate-mono-mp3", voice="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)", pitch="+0Hz", rate="+0%", volume="+0%", customspeak=False):
+    async def run(self, msgs, sentenceBoundary=False, wordBoundary=False, codec="audio-24khz-48kbitrate-mono-mp3", voice="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)", pitch="+0Hz", rate="+0%", volume="+0%", customspeak=False):
         sentenceBoundary = str(sentenceBoundary).lower()
         wordBoundary = str(wordBoundary).lower()
 
@@ -128,6 +128,9 @@ class Communicate:
             wsmax = 2 ** 16
             overhead = len(self.mkssmlmsg("", voice, pitch, rate, volume, customspeak=False).encode('utf-8'))
             msgs = _minimize(escape(removeIncompatibleControlChars(msg)), b" ", wsmax - overhead)
+        else:
+            if type(msgs) is str:
+                msgs = [msgs]
 
         async with websockets.connect(
             wssUrl + "&ConnectionId=" + connectId(),
