@@ -170,8 +170,8 @@ class Communicate:
                                 download = False
                                 break
                             elif 'audio.metadata' in recv.data:
-                                #print("".join(recv.split('Path:audio.metadata\r\n\r\n')[1:]), file=sys.stderr)
-                                metadata = json.loads("".join(recv.split('Path:audio.metadata\r\n\r\n')[1:]))
+                                #print("".join(recv.data.split('Path:audio.metadata\r\n\r\n')[1:]), file=sys.stderr)
+                                metadata = json.loads("".join(recv.data.split('Path:audio.metadata\r\n\r\n')[1:]))
                                 text = metadata['Metadata'][0]['Data']['text']['Text']
                                 offset = metadata['Metadata'][0]['Data']['Offset']
                                 yield [ offset, text, None ]
