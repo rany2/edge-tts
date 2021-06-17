@@ -5,15 +5,13 @@ import uuid
 import argparse
 import asyncio
 import ssl
-import websockets
 import logging
-import httpx
 import time
 import math
+import aiohttp
 from xml.sax.saxutils import escape
 
 # Default variables
-ssl_context = ssl.create_default_context()
 trustedClientToken = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
 wssUrl = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=' + trustedClientToken
 voiceList = 'https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=' + trustedClientToken
@@ -55,23 +53,24 @@ def mktimestamp(ns):
 # Return loaded JSON data of list of Edge's voices
 # NOTE: It's not the total list of available voices.
 #       This is only what is presented in the UI.
-def list_voices():
+async def list_voices():
     logger = logging.getLogger("edgeTTS.list_voices")
-    with httpx.Client(http2=True, headers={
-            'Authority': 'speech.platform.bing.com',
-            'Sec-CH-UA': "\" Not;A Brand\";v=\"99\", \"Microsoft Edge\";v=\"91\", \"Chromium\";v=\"91\"",
-            'Sec-CH-UA-Mobile': '?0',
-            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
-            'Accept': '*/*',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Dest': 'empty',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'en-US,en;q=0.9'
-    }) as url:
-        logger.debug("Loading json from %s" % voiceList)
-        data = json.loads(url.get(voiceList).content)
-        logger.debug("JSON Loaded")
+    async with aiohttp.ClientSession(trust_env=True) as session:
+        async with session.get(voiceList, headers={
+                'Authority': 'speech.platform.bing.com',
+                'Sec-CH-UA': "\" Not;A Brand\";v=\"99\", \"Microsoft Edge\";v=\"91\", \"Chromium\";v=\"91\"",
+                'Sec-CH-UA-Mobile': '?0',
+                'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
+                'Accept': '*/*',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Dest': 'empty',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Accept-Language': 'en-US,en;q=0.9'
+        }) as url:
+            logger.debug("Loading json from %s" % voiceList)
+            data = json.loads(await url.text())
+            logger.debug("JSON Loaded")
     return data
 
 class SubMaker:
@@ -132,50 +131,56 @@ class Communicate:
             if type(msgs) is str:
                 msgs = [msgs]
 
-        async with websockets.connect(
-            wssUrl + "&ConnectionId=" + connectId(),
-            ssl=ssl_context,
-            compression="deflate",
-            extra_headers={
-                "Pragma": "no-cache",
-                "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "en-US,en;q=0.9",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
-                "Cache-Control": "no-cache"
-            }
-        ) as ws:
-            for msg in msgs:
-                self.date = formatdate() # Each message needs to have its send date
+        async with aiohttp.ClientSession(trust_env=True) as session:
+            async with session.ws_connect(
+                wssUrl + "&ConnectionId=" + connectId(),
+                compress = 15,
+                autoclose = True,
+                autoping = True,
+                headers={
+                    "Pragma": "no-cache",
+                    "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
+                    "Cache-Control": "no-cache"
+                }
+            ) as ws:
+                for msg in msgs:
+                    self.date = formatdate() # Each message needs to have its send date
 
-                if not customspeak:
-                    msg = self.mkssmlmsg(msg.decode('utf-8'), voice, pitch, rate, volume, customspeak=False)
-                else:
-                    msg = self.mkssmlmsg(msg, customspeak=True)
+                    if not customspeak:
+                        msg = self.mkssmlmsg(msg.decode('utf-8'), voice, pitch, rate, volume, customspeak=False)
+                    else:
+                        msg = self.mkssmlmsg(msg, customspeak=True)
 
-                message='X-Timestamp:'+self.date+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
-                message+='{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"'+sentenceBoundary+'","wordBoundaryEnabled":"'+wordBoundary+'"},"outputFormat":"' + codec + '"}}}}\r\n'
-                await ws.send(message)
-                await ws.send(msg)
-                download = False
-                async for recv in ws:
-                    if type(recv) is str:
-                        if 'turn.start' in recv:
-                            download = True
-                        elif 'turn.end' in recv:
-                            download = False
+                    message='X-Timestamp:'+self.date+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n'
+                    message+='{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"'+sentenceBoundary+'","wordBoundaryEnabled":"'+wordBoundary+'"},"outputFormat":"' + codec + '"}}}}\r\n'
+                    await ws.send_str(message)
+                    await ws.send_str(msg)
+                    download = False
+                    async for recv in ws:
+                        if recv.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
                             break
-                        elif 'audio.metadata' in recv:
-                            #print("".join(recv.split('Path:audio.metadata\r\n\r\n')[1:]), file=sys.stderr)
-                            metadata = json.loads("".join(recv.split('Path:audio.metadata\r\n\r\n')[1:]))
-                            text = metadata['Metadata'][0]['Data']['text']['Text']
-                            offset = metadata['Metadata'][0]['Data']['Offset']
-                            yield [ offset, text, None ]
-                    elif type(recv) is bytes:
-                        if download:
-                            yield [ None, None, b"".join(recv.split(b'Path:audio\r\n')[1:]) ]
 
-            await ws.close()
+                        if recv.type == aiohttp.WSMsgType.TEXT:
+                            if 'turn.start' in recv.data:
+                                download = True
+                            elif 'turn.end' in recv.data:
+                                download = False
+                                break
+                            elif 'audio.metadata' in recv.data:
+                                #print("".join(recv.split('Path:audio.metadata\r\n\r\n')[1:]), file=sys.stderr)
+                                metadata = json.loads("".join(recv.split('Path:audio.metadata\r\n\r\n')[1:]))
+                                text = metadata['Metadata'][0]['Data']['text']['Text']
+                                offset = metadata['Metadata'][0]['Data']['Offset']
+                                yield [ offset, text, None ]
+
+                        elif recv.type == aiohttp.WSMsgType.BINARY:
+                            if download:
+                                yield [ None, None, b"".join(recv.data.split(b'Path:audio\r\n')[1:]) ]
+
+                await ws.close()
 
 # Based on https://github.com/pndurette/gTTS/blob/6d9309f05b3ad26ca356654732f3b5b9c3bec538/gtts/utils.py#L13-L54
 # Modified to measure based on bytes rather than number of characters
@@ -250,7 +255,7 @@ async def _main():
                     media_file.write(i[2])
             elif i[0] is not None and i[1] is not None:
                 subs.createSub(i[0], i[1])
-        media_file.close()
+        if args.write_media: media_file.close()
         if not subs.subsAndOffset == {}:
             if not args.write_subtitles:
                 sys.stderr.write(subs.generateSubs())
@@ -260,7 +265,7 @@ async def _main():
                 subtitle_file.close()
     elif args.list_voices:
         seperator = False
-        for voice in list_voices():
+        for voice in await list_voices():
             if seperator: print()
             for key in voice.keys():
                 logger.debug("Processing key %s" % key)
