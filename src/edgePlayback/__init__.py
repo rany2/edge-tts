@@ -11,7 +11,7 @@ def main():
                 print ()
                 print ("Media file      %s" % media.name)
                 print ("Subtitle file   %s\n" % subtitle.name)
-                p = subprocess.Popen(['edge-tts', '-w'] + sys.argv[1:], stdout=media, stderr=subtitle)
+                p = subprocess.Popen(['edge-tts', '-w', '--write-media', media.name, '--write-subtitles', subtitle.name] + sys.argv[1:])
                 p.communicate()
                 p = subprocess.Popen(['mpv', '--keep-open=yes', '--sub-file=' + subtitle.name, media.name])
                 p.communicate()

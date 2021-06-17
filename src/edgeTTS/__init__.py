@@ -223,6 +223,8 @@ async def _main():
     parser.add_argument('-s', '--enable-sentence-boundary', help="enable sentence boundary (not implemented but settable)", action='store_true')
     parser.add_argument('-w', '--enable-word-boundary', help="enable word boundary (not implemented but settable)", action='store_true')
     parser.add_argument('-O', '--overlapping', help="overlapping subtitles in seconds", default=5, type=float)
+    parser.add_argument('--write-media', help="instead of stdout, send media output to provided file")
+    parser.add_argument('--write-subtitles', help="instead of stderr, send subtitle output to provided file") 
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
     logger = logging.getLogger("edgeTTS._main")
@@ -239,13 +241,23 @@ async def _main():
                     args.text = file.read()
         tts = Communicate()
         subs = SubMaker(args.overlapping)
+        if args.write_media: media_file = open(args.write_media, 'wb')
         async for i in tts.run(args.text, args.enable_sentence_boundary, args.enable_word_boundary, args.codec, args.voice, args.pitch, args.rate, args.volume, customspeak=args.custom_ssml):
             if i[2] is not None:
-                sys.stdout.buffer.write(i[2])
+                if not args.write_media:
+                    sys.stdout.buffer.write(i[2])
+                else:
+                    media_file.write(i[2])
             elif i[0] is not None and i[1] is not None:
                 subs.createSub(i[0], i[1])
+        media_file.close()
         if not subs.subsAndOffset == {}:
-            sys.stderr.write(subs.generateSubs())
+            if not args.write_subtitles:
+                sys.stderr.write(subs.generateSubs())
+            else:
+                subtitle_file = open(args.write_subtitles, 'w')
+                subtitle_file.write(subs.generateSubs())
+                subtitle_file.close()
     elif args.list_voices:
         seperator = False
         for voice in list_voices():
