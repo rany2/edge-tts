@@ -76,6 +76,7 @@ async def list_voices():
 class SubMaker:
     def __init__(self, overlapping=5):
         self.subsAndOffset = []
+        self.brokenOffset = []
         self.overlapping = (overlapping * (10**7))
 
     def formatter(self, offset1, offset2, subdata):
@@ -85,8 +86,9 @@ class SubMaker:
 
     def createSub(self, timestamp, text):
         if len(self.subsAndOffset) >= 2:
-            if self.subsAndOffset[-2] >= timestamp:
-                timestamp = timestamp + self.subsAndOffset[-2]
+            if self.subsAndOffset[-2] >= timestamp + sum(self.brokenOffset):
+                self.brokenOffset.append(self.subsAndOffset[-2])
+            timestamp = timestamp + sum(self.brokenOffset)
 
         self.subsAndOffset.append(timestamp)
         self.subsAndOffset.append(text)
