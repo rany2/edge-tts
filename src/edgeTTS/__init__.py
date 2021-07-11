@@ -75,7 +75,7 @@ async def list_voices():
 
 class SubMaker:
     def __init__(self, overlapping=5):
-        self.subsAndOffset = {}
+        self.subsAndOffset = []
         self.overlapping = (overlapping * (10**7))
 
     def formatter(self, offset1, offset2, subdata):
@@ -84,32 +84,40 @@ class SubMaker:
         return data
 
     def createSub(self, timestamp, text):
-        self.subsAndOffset.update({ timestamp: text })
+        if len(self.subsAndOffset) >= 2:
+            if self.subsAndOffset[-2] >= timestamp:
+                timestamp = timestamp + self.subsAndOffset[-2]
+
+        self.subsAndOffset.append(timestamp)
+        self.subsAndOffset.append(text)
 
     def generateSubs(self):
-        oldTimeStamp = None
-        oldSubData = None
-        data = "WEBVTT\r\n\r\n"
-        first = sorted(self.subsAndOffset.keys(), key=int)[0]
-        try:
-            second = sorted(self.subsAndOffset.keys(), key=int)[1]
-            data += self.formatter(first, second + self.overlapping, self.subsAndOffset[first]) ## overlapping Subtitles
-        except IndexError: # This means TTS said one word only.
-            data += self.formatter(0, first + ((10**7) * 10), self.subsAndOffset[first])
-        for sub in sorted(self.subsAndOffset.keys(), key=int)[1:]:
-            if oldTimeStamp is not None and oldSubData is not None:
-                data += self.formatter(oldTimeStamp, sub + self.overlapping, oldSubData) ## overlapping Subtitles
-            oldTimeStamp = sub
-            oldSubData = self.subsAndOffset[sub]
-        if oldTimeStamp is not None and oldSubData is not None:
+        if len(self.subsAndOffset) >= 2:
+            data = "WEBVTT\r\n\r\n"
+            oldTimeStamp = None
+            oldSubData = None
+            for offset, subs in zip(self.subsAndOffset[::2], self.subsAndOffset[1::2]):
+                if oldTimeStamp is not None and oldSubData is not None:
+                    data += self.formatter(oldTimeStamp, offset + self.overlapping, oldSubData)
+                oldTimeStamp = offset
+                oldSubData = subs
             data += self.formatter(oldTimeStamp, oldTimeStamp + ((10**7) * 10), oldSubData)
-        return data
+            return data
+        return ""
 
 class Communicate:
     def __init__(self):
         self.date = formatdate()
 
-    def mkssmlmsg(self, text="", voice="", pitch="", rate="", volume="", customspeak=False):
+    def mkssmlmsg(
+        self,
+        text="",
+        voice="",
+        pitch="",
+        rate="",
+        volume="",
+        customspeak=False
+    ):
         message='X-RequestId:'+connectId()+'\r\nContent-Type:application/ssml+xml\r\n'
         message+='X-Timestamp:'+self.date+'Z\r\nPath:ssml\r\n\r\n'
         if customspeak:
@@ -119,7 +127,18 @@ class Communicate:
             message+="<voice  name='" + voice + "'>" + "<prosody pitch='" + pitch + "' rate ='" + rate + "' volume='" + volume + "'>" + text + '</prosody></voice></speak>'
         return message
 
-    async def run(self, msgs, sentenceBoundary=False, wordBoundary=False, codec="audio-24khz-48kbitrate-mono-mp3", voice="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)", pitch="+0Hz", rate="+0%", volume="+0%", customspeak=False):
+    async def run(
+        self,
+        msgs,
+        sentenceBoundary=False,
+        wordBoundary=False,
+        codec="audio-24khz-48kbitrate-mono-mp3",
+        voice="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
+        pitch="+0Hz",
+        rate="+0%",
+        volume="+0%",
+        customspeak=False
+    ):
         sentenceBoundary = str(sentenceBoundary).lower()
         wordBoundary = str(wordBoundary).lower()
 
@@ -255,14 +274,14 @@ async def _main():
                     media_file.write(i[2])
             elif i[0] is not None and i[1] is not None:
                 subs.createSub(i[0], i[1])
-        if args.write_media: media_file.close()
-        if not subs.subsAndOffset == {}:
-            if not args.write_subtitles:
-                sys.stderr.write(subs.generateSubs())
-            else:
-                subtitle_file = open(args.write_subtitles, 'w')
-                subtitle_file.write(subs.generateSubs())
-                subtitle_file.close()
+        if args.write_media:
+            media_file.close()
+        if not args.write_subtitles:
+            sys.stderr.write(subs.generateSubs())
+        else:
+            subtitle_file = open(args.write_subtitles, 'w')
+            subtitle_file.write(subs.generateSubs())
+            subtitle_file.close()
     elif args.list_voices:
         seperator = False
         for voice in await list_voices():
