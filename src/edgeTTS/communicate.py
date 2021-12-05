@@ -45,12 +45,15 @@ def remove_incompatible_characters(string):
     result in an error from the service.
 
     Args:
-        string (byte): The string to be cleaned.
+        string (str or bytes): The string to be cleaned.
 
     Returns:
-        byte: The cleaned string.
+        str: The cleaned string.
     """
-    cleaned_string = b""
+    if isinstance(string, bytes):
+        string = string.decode("utf-8")
+
+    cleaned_string = ""
     for character in string:
         character_code = ord(character)
         if (
@@ -244,7 +247,8 @@ class Communicate:
                 + 50
             )  # margin of error
             messages = split_text_by_byte_length(
-                escape(messages), websocket_max_size - overhead_per_message
+                escape(remove_incompatible_characters(messages)),
+                websocket_max_size - overhead_per_message,
             )
         else:
             if isinstance(messages, str):
