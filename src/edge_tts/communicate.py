@@ -105,21 +105,24 @@ def split_text_by_byte_length(text, byte_length):
     if isinstance(text, str):
         text = text.encode("utf-8")
 
-    split_text = []
-    current_string = b""
-    for character in iter_bytes(text):
-        if len(current_string) + len(character) <= byte_length:
-            current_string += character
+    words = []
+    while len(text) > byte_length:
+        # Find the last space in the string
+        last_space = text.rfind(b" ", 0, byte_length)
+        if last_space == -1:
+            # No space found, just split at the byte length
+            words.append(text[:byte_length])
+            text = text[byte_length:]
         else:
-            split_text.append(current_string)
-            current_string = character
-            if split_text[-1].find(b" ") != -1:
-                while split_text[-1][-1] != b" ":
-                    current_string = split_text[-1][-1] + current_string
-                    split_text[-1] = split_text[-1][:-1]
-    if current_string != b"":
-        split_text.append(current_string)
-    return split_text
+            # Split at the last space
+            words.append(text[:last_space])
+            text = text[last_space:]
+    words.append(text)
+
+    # Remove empty strings from the list
+    words = [word for word in words if word]
+    # Return the list
+    return words
 
 
 def mkssml(text, voice, pitch, rate, volume):
