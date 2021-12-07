@@ -53,17 +53,14 @@ def remove_incompatible_characters(string):
     if isinstance(string, bytes):
         string = string.decode("utf-8")
 
-    cleaned_string = ""
-    for character in string:
-        character_code = ord(character)
-        if (
-            (0 <= character_code <= 8)
-            or (11 <= character_code <= 12)
-            or (14 <= character_code <= 31)
-        ):
-            character = " "
-        cleaned_string += character
-    return cleaned_string
+    string = list(string)
+
+    for idx in range(len(string)):  # pylint: disable=consider-using-enumerate
+        code = ord(string[idx])
+        if (0 <= code <= 8) or (11 <= code <= 12) or (14 <= code <= 31):
+            string[idx] = " "
+
+    return "".join(string)
 
 
 def connect_id():
@@ -144,7 +141,8 @@ def mkssml(text, voice, pitch, rate, volume):
 
     ssml = (
         "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>"
-        f"<voice name='{voice}'><prosody pitch='{pitch}' rate='{rate}' volume='{volume}'>{text}</prosody></voice></speak>"
+        f"<voice name='{voice}'><prosody pitch='{pitch}' rate='{rate}' volume='{volume}'>"
+        f"{text}</prosody></voice></speak>"
     )
     return ssml
 
@@ -192,7 +190,7 @@ def ssml_headers_plus_data(request_id, timestamp, ssml):
     )
 
 
-class Communicate:
+class Communicate:  # pylint: disable=too-few-public-methods
     """
     Class for communicating with the service.
     """
@@ -214,7 +212,7 @@ class Communicate:
         rate="+0%",
         volume="+0%",
         customspeak=False,
-    ):
+    ):  # pylint: disable=too-many-arguments, too-many-locals
         """
         Runs the Communicate class.
 
@@ -266,7 +264,8 @@ class Communicate:
                     "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
                     "Accept-Encoding": "gzip, deflate, br",
                     "Accept-Language": "en-US,en;q=0.9",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    " (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
                 },
             ) as websocket:
                 for message in messages:
@@ -275,18 +274,22 @@ class Communicate:
 
                     # Prepare the request to be sent to the service.
                     #
-                    # Note that sentenceBoundaryEnabled and wordBoundaryEnabled are actually supposed
-                    # to be booleans, but Edge Browser seems to send them as strings and not booleans.
-                    # This is a bug in Edge Browser as Azure Cognitive Services actually sends them as
-                    # booleans and not strings. For now I will send them as booleans unless it causes
+                    # Note sentenceBoundaryEnabled and wordBoundaryEnabled are actually supposed
+                    # to be booleans, but Edge Browser seems to send them as strings.
+                    #
+                    # This is a bug in Edge as Azure Cognitive Services actually sends them as
+                    # bool and not string. For now I will send them as bool unless it causes
                     # any problems.
                     #
-                    # Also pay close attention to double {  } in request (escape for Python .format()).
+                    # Also pay close attention to double { } in request (escape for f-string).
                     request = (
                         f"X-Timestamp:{self.date}\r\n"
                         "Content-Type:application/json; charset=utf-8\r\n"
                         "Path:speech.config\r\n\r\n"
-                        f'{{"context":{{"synthesis":{{"audio":{{"metadataoptions":{{"sentenceBoundaryEnabled":{sentence_boundary},"wordBoundaryEnabled":{word_boundary}}},"outputFormat":"{codec}"}}}}}}}}\r\n'
+                        '{"context":{"synthesis":{"audio":{"metadataoptions":{'
+                        f'"sentenceBoundaryEnabled":{sentence_boundary},'
+                        f'"wordBoundaryEnabled":{word_boundary}}},"outputFormat":"{codec}"'
+                        "}}}}\r\n"
                     )
                     # Send the request to the service.
                     await websocket.send_str(request)

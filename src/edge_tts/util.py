@@ -7,7 +7,54 @@ import argparse
 import asyncio
 import sys
 
-from edgeTTS import Communicate, SubMaker, list_voices
+from edge_tts import Communicate, SubMaker, list_voices
+
+
+async def _list_voices():
+    """
+    List available voices.
+    """
+    for idx, voice in enumerate(await list_voices()):
+        if idx != 0:
+            print()
+
+        for key in voice.keys():
+            if key in ["SuggestedCodec", "FriendlyName", "Status"]:
+                continue
+            # print ("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
+            print(f"{key}: {voice[key]}")
+
+
+async def _tts(args):
+    tts = Communicate()
+    subs = SubMaker(args.overlapping)
+    if args.write_media:
+        media_file = open(args.write_media, "wb")  # pylint: disable=consider-using-with
+    async for i in tts.run(
+        args.text,
+        args.enable_sentence_boundary,
+        args.enable_word_boundary,
+        args.codec,
+        args.voice,
+        args.pitch,
+        args.rate,
+        args.volume,
+        customspeak=args.custom_ssml,
+    ):
+        if i[2] is not None:
+            if not args.write_media:
+                sys.stdout.buffer.write(i[2])
+            else:
+                media_file.write(i[2])
+        elif i[0] is not None and i[1] is not None:
+            subs.create_sub(i[0], i[1])
+    if args.write_media:
+        media_file.close()
+    if not args.write_subtitles:
+        sys.stderr.write(subs.generate_subs())
+    else:
+        with open(args.write_subtitles, "w", encoding="utf-8") as file:
+            file.write(subs.generate_subs())
 
 
 async def _main():
@@ -24,19 +71,23 @@ async def _main():
     parser.add_argument(
         "-v",
         "--voice",
-        help="voice for TTS. Default: Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
+        help="voice for TTS. "
+        "Default: Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
         default="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
     )
     parser.add_argument(
         "-c",
         "--codec",
-        help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. Another choice is webm-24khz-16bit-mono-opus. For more info check https://bit.ly/2T33h6S",
+        help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. "
+        "Another choice is webm-24khz-16bit-mono-opus. "
+        "For more info check https://bit.ly/2T33h6S",
         default="audio-24khz-48kbitrate-mono-mp3",
     )
     group.add_argument(
         "-l",
         "--list-voices",
-        help="lists available voices. Edge's list is incomplete so check https://bit.ly/2SFq1d3",
+        help="lists available voices. "
+        "Edge's list is incomplete so check https://bit.ly/2SFq1d3",
         action="store_true",
     )
     parser.add_argument(
@@ -85,6 +136,10 @@ async def _main():
     )
     args = parser.parse_args()
 
+    if args.list_voices:
+        await _list_voices()
+        sys.exit(0)
+
     if args.text is not None or args.file is not None:
         if args.file is not None:
             # we need to use sys.stdin.read() because some devices
@@ -96,45 +151,8 @@ async def _main():
                 # logger.debug("reading from %s" % args.file)
                 with open(args.file, "r", encoding="utf-8") as file:
                     args.text = file.read()
-        tts = Communicate()
-        subs = SubMaker(args.overlapping)
-        if args.write_media:
-            media_file = open(args.write_media, "wb")
-        async for i in tts.run(
-            args.text,
-            args.enable_sentence_boundary,
-            args.enable_word_boundary,
-            args.codec,
-            args.voice,
-            args.pitch,
-            args.rate,
-            args.volume,
-            customspeak=args.custom_ssml,
-        ):
-            if i[2] is not None:
-                if not args.write_media:
-                    sys.stdout.buffer.write(i[2])
-                else:
-                    media_file.write(i[2])
-            elif i[0] is not None and i[1] is not None:
-                subs.create_sub(i[0], i[1])
-        if args.write_media:
-            media_file.close()
-        if not args.write_subtitles:
-            sys.stderr.write(subs.generate_subs())
-        else:
-            with open(args.write_subtitles, "w", encoding="utf-8") as file:
-                file.write(subs.generate_subs())
-    elif args.list_voices:
-        for idx, voice in enumerate(await list_voices()):
-            if idx != 0:
-                print()
 
-            for key in voice.keys():
-                if key in ["SuggestedCodec", "FriendlyName", "Status"]:
-                    continue
-                # print ("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
-                print(f"{key}: {voice[key]}")
+        await _tts(args)
 
 
 def main():

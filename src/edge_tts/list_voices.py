@@ -15,9 +15,7 @@ async def list_voices():
 
     This pulls data from the URL used by Microsoft Edge to return a list of
     all available voices. However many more experimental voices are available
-    than are listed here.
-    (See
-    https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/language-support)
+    than are listed here. (See https://aka.ms/csspeech/voicenames)
 
     Returns:
         dict: A dictionary of voice attributes.
@@ -29,7 +27,8 @@ async def list_voices():
                 "Authority": "speech.platform.bing.com",
                 "Sec-CH-UA": '" Not;A Brand";v="99", "Microsoft Edge";v="91", "Chromium";v="91"',
                 "Sec-CH-UA-Mobile": "?0",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
                 "Accept": "*/*",
                 "Sec-Fetch-Site": "none",
                 "Sec-Fetch-Mode": "cors",

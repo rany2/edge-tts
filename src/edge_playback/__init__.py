@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+Playback TTS with subtitles using edge-tts and mpv.
+"""
+
 import subprocess
 import sys
 import tempfile
@@ -7,13 +11,16 @@ from shutil import which
 
 
 def main():
+    """
+    Main function.
+    """
     if which("mpv") and which("edge-tts"):
         with tempfile.NamedTemporaryFile() as media:
             with tempfile.NamedTemporaryFile() as subtitle:
                 print()
-                print("Media file      %s" % media.name)
-                print("Subtitle file   %s\n" % subtitle.name)
-                p = subprocess.Popen(
+                print(f"Media file      {media.name}")
+                print(f"Subtitle file   {subtitle.name}\n")
+                with subprocess.Popen(
                     [
                         "edge-tts",
                         "-w",
@@ -23,17 +30,18 @@ def main():
                         subtitle.name,
                     ]
                     + sys.argv[1:]
-                )
-                p.communicate()
-                p = subprocess.Popen(
+                ) as process:
+                    process.communicate()
+
+                with subprocess.Popen(
                     [
                         "mpv",
                         "--keep-open=yes",
-                        "--sub-file=" + subtitle.name,
+                        f"--sub-file={subtitle.name}",
                         media.name,
                     ]
-                )
-                p.communicate()
+                ) as process:
+                    process.communicate()
     else:
         print("This script requires mpv and edge-tts.")
 
