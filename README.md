@@ -6,11 +6,11 @@
 
 To install it, run the following command:
 
-    pip install edge-tts
+    $ pip install edge-tts
 
 If you only want to use the `edge-tts` and `edge-playback` commands, it would be better to use pipx:
 
-    pipx install edge-tts
+    $ pipx install edge-tts
 
 ## Usage
 
@@ -83,7 +83,8 @@ It would be easiest to do the following:
 1. Create a file called `custom_ssml.xml` with the above content.
 2. Run the following command:
 
-    $ edge-tts --custom-ssml --file custom_ssml.xml > amazing.mp3
+       $ edge-tts --custom-ssml --file custom_ssml.xml > amazing.mp3
+
 3. Voila!
 
 ### Changing pitch, rate, volume, etc.
