@@ -6,7 +6,6 @@ information provided by the service easier.
 """
 
 import math
-from xml.sax.saxutils import escape
 
 
 def formatter(offset1, offset2, subdata):
@@ -15,7 +14,7 @@ def formatter(offset1, offset2, subdata):
     """
     return (
         f"{mktimestamp(offset1)} --> {mktimestamp(offset2)}\r\n"
-        f"{escape(subdata)}\r\n\r\n"
+        f"{subdata}\r\n\r\n"
     )
 
 
