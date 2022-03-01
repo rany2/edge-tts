@@ -32,8 +32,7 @@ async def _tts(args):
         media_file = open(args.write_media, "wb")  # pylint: disable=consider-using-with
     async for i in tts.run(
         args.text,
-        args.enable_sentence_boundary,
-        args.enable_word_boundary,
+        args.boundary_type,
         args.codec,
         args.voice,
         args.pitch,
@@ -109,23 +108,18 @@ async def _main():
         default="+0%",
     )
     parser.add_argument(
-        "-s",
-        "--enable-sentence-boundary",
-        help="enable sentence boundary",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-w",
-        "--enable-word-boundary",
-        help="enable word boundary",
-        action="store_true",
-    )
-    parser.add_argument(
         "-O",
         "--overlapping",
         help="overlapping subtitles in seconds",
         default=5,
         type=float,
+    )
+    parser.add_argument(
+        "-b",
+        "--boundary-type",
+        help="set boundary type for subtitles. Default 0 for none. Set 1 for word_boundary, 2 for sentence_boundary",
+        default=0,
+        type=int,
     )
     parser.add_argument(
         "--write-media", help="instead of stdout, send media output to provided file"

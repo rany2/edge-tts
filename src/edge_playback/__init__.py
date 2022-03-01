@@ -18,16 +18,14 @@ def main():
         with tempfile.NamedTemporaryFile() as media:
             with tempfile.NamedTemporaryFile() as subtitle:
                 print()
-                print(f"Media file      {media.name}")
-                print(f"Subtitle file   {subtitle.name}\n")
+                print(f"Media file: {media.name}")
+                print(f"Subtitle file: {subtitle.name}\n")
                 with subprocess.Popen(
                     [
                         "edge-tts",
-                        "-w",
-                        "--write-media",
-                        media.name,
-                        "--write-subtitles",
-                        subtitle.name,
+                        "--boundary-type=2",
+                        f"--write-media={media.name}",
+                        f"--write-subtitles={subtitle.name}",
                     ]
                     + sys.argv[1:]
                 ) as process:

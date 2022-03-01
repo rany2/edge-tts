@@ -28,9 +28,9 @@ def mktimestamp(time_unit):
     Returns:
         str: The timecode of the subtitle.
     """
-    hour = math.floor(time_unit / 10 ** 7 / 3600)
-    minute = math.floor((time_unit / 10 ** 7 / 60) % 60)
-    seconds = (time_unit / 10 ** 7) % 60
+    hour = math.floor(time_unit / 10**7 / 3600)
+    minute = math.floor((time_unit / 10**7 / 60) % 60)
+    seconds = (time_unit / 10**7) % 60
     return f"{hour:02d}:{minute:02d}:{seconds:06.3f}"
 
 
@@ -49,7 +49,7 @@ class SubMaker:
         """
         self.subs_and_offset = []
         self.broken_offset = []
-        self.overlapping = overlapping * (10 ** 7)
+        self.overlapping = overlapping * (10**7)
 
     def create_sub(self, timestamp, text):
         """
@@ -57,16 +57,19 @@ class SubMaker:
         and adds it to the list of subtitles
 
         Args:
-            timestamp (int): The timestamp of the subtitle.
+            timestamp (tuple): The offset and duration of the subtitle.
             text (str): The text of the subtitle.
 
         Returns:
             None
         """
+        timestamp[1] += timestamp[0]
+
         if len(self.subs_and_offset) >= 2:
-            if self.subs_and_offset[-2] >= timestamp + sum(self.broken_offset):
-                self.broken_offset.append(self.subs_and_offset[-2])
-            timestamp = timestamp + sum(self.broken_offset)
+            if self.subs_and_offset[-2][-1] >= timestamp[1] + sum(self.broken_offset):
+                self.broken_offset.append(self.subs_and_offset[-2][1])
+            timestamp[0] += sum(self.broken_offset)
+            timestamp[1] += sum(self.broken_offset)
 
         self.subs_and_offset.append(timestamp)
         self.subs_and_offset.append(text)
@@ -80,19 +83,27 @@ class SubMaker:
         """
         if len(self.subs_and_offset) >= 2:
             data = "WEBVTT\r\n\r\n"
-            old_time_stamp = None
-            old_sub_data = None
             for offset, subs in zip(
                 self.subs_and_offset[::2], self.subs_and_offset[1::2]
             ):
-                if old_time_stamp is not None and old_sub_data is not None:
-                    data += formatter(
-                        old_time_stamp, offset + self.overlapping, old_sub_data
-                    )
-                old_time_stamp = offset
-                old_sub_data = subs
-            data += formatter(
-                old_time_stamp, old_time_stamp + ((10 ** 7) * 10), old_sub_data
-            )
+                subs = [subs[i : i + 79] for i in range(0, len(subs), 79)]
+
+                for i in range(len(subs) - 1):
+                    sub = subs[i]
+                    split_at_word = True
+                    if sub[-1] == " ":
+                        subs[i] = sub[:-1]
+                        split_at_word = False
+
+                    if sub[0] == " ":
+                        subs[i] = sub[1:]
+                        split_at_word = False
+
+                    if split_at_word:
+                        subs[i] += "-"
+
+                subs = "\r\n".join(subs)
+
+                data += formatter(offset[0], offset[1] + self.overlapping, subs)
             return data
         return ""

@@ -207,8 +207,7 @@ class Communicate:  # pylint: disable=too-few-public-methods
     async def run(
         self,
         messages,
-        sentence_boundary=False,
-        word_boundary=False,
+        boundary_type=0,
         codec="audio-24khz-48kbitrate-mono-mp3",
         voice="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
         pitch="+0Hz",
@@ -221,8 +220,7 @@ class Communicate:  # pylint: disable=too-few-public-methods
 
         Args:
             messages (str or list): A list of SSML strings or a single text.
-            sentence_boundary (bool): Whether to use sentence boundary.
-            word_boundary (bool): Whether to use word boundary.
+            boundery_type (int): The type of boundary to use. 0 for none, 1 for word_boundary, 2 for sentence_boundary.
             codec (str): The codec to use.
             voice (str): The voice to use (only applicable to non-customspeak).
             pitch (str): The pitch to use (only applicable to non-customspeak).
@@ -234,11 +232,19 @@ class Communicate:  # pylint: disable=too-few-public-methods
             tuple: The subtitle offset, subtitle, and audio data.
         """
 
+        word_boundary = False
+        sentence_boundary = False
+
+        if boundary_type > 0:
+            word_boundary = True
+        if boundary_type > 1:
+            sentence_boundary = True
+
         sentence_boundary = str(sentence_boundary).lower()
         word_boundary = str(word_boundary).lower()
 
         if not customspeak:
-            websocket_max_size = 2 ** 16
+            websocket_max_size = 2**16
             overhead_per_message = (
                 len(
                     ssml_headers_plus_data(
@@ -312,6 +318,9 @@ class Communicate:  # pylint: disable=too-few-public-methods
 
                     # Begin listening for the response.
                     download = False
+                    current_subtitle = ""
+                    first_offset = None
+                    last_offset = None
                     async for received in websocket:
                         if received.type in (
                             aiohttp.WSMsgType.CLOSED,
@@ -337,13 +346,53 @@ class Communicate:  # pylint: disable=too-few-public-methods
                                 and parameters["Path"] == "audio.metadata"
                             ):
                                 metadata = json.loads(data)
-                                text = metadata["Metadata"][0]["Data"]["text"]["Text"]
-                                offset = metadata["Metadata"][0]["Data"]["Offset"]
-                                yield (
-                                    offset,
-                                    text,
-                                    None,
-                                )
+                                metadata_type = metadata["Metadata"][0]["Type"]
+                                metadata_offset = metadata["Metadata"][0]["Data"][
+                                    "Offset"
+                                ]
+                                try:
+                                    metadata_duration = metadata["Metadata"][0]["Data"][
+                                        "Duration"
+                                    ]
+                                except KeyError:
+                                    metadata_duration = 0
+                                metadata_text = metadata["Metadata"][0]["Data"]["text"][
+                                    "Text"
+                                ]
+                                if boundary_type == 1:
+                                    yield (
+                                        [
+                                            metadata_offset,
+                                            metadata_duration,
+                                        ],
+                                        metadata_text,
+                                        None,
+                                    )
+                                else:
+                                    if metadata_type == "WordBoundary":
+                                        if current_subtitle:
+                                            current_subtitle += " "
+                                        current_subtitle += metadata_text
+                                        if first_offset is None:
+                                            first_offset = metadata_offset
+                                        last_offset = [
+                                            metadata_offset,
+                                            metadata_duration,
+                                        ]
+                                    elif metadata_type == "SentenceBoundary":
+                                        if current_subtitle:
+                                            yield (
+                                                [
+                                                    first_offset,
+                                                    sum(last_offset) - first_offset,
+                                                ],
+                                                current_subtitle,
+                                                None,
+                                            )
+                                        current_subtitle = ""
+                                        first_offset = None
+                                        last_offset = None
+
                         elif received.type == aiohttp.WSMsgType.BINARY:
                             if download:
                                 yield (
@@ -353,4 +402,10 @@ class Communicate:  # pylint: disable=too-few-public-methods
                                         received.data.split(b"Path:audio\r\n")[1:]
                                     ),
                                 )
+                if current_subtitle:
+                    yield (
+                        [first_offset, sum(last_offset) - first_offset],
+                        current_subtitle,
+                        None,
+                    )
                 await websocket.close()
