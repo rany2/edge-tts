@@ -6,6 +6,7 @@ information provided by the service easier.
 """
 
 import math
+from xml.sax.saxutils import escape, unescape
 
 
 def formatter(offset1, offset2, subdata):
@@ -14,7 +15,7 @@ def formatter(offset1, offset2, subdata):
     """
     return (
         f"{mktimestamp(offset1)} --> {mktimestamp(offset2)}\r\n"
-        f"{subdata}\r\n\r\n"
+        f"{escape(subdata)}\r\n\r\n"
     )
 
 
@@ -85,6 +86,7 @@ class SubMaker:
             for offset, subs in zip(
                 self.subs_and_offset[::2], self.subs_and_offset[1::2]
             ):
+                subs = unescape(subs)
                 subs = [subs[i : i + 79] for i in range(0, len(subs), 79)]
 
                 for i in range(len(subs) - 1):
