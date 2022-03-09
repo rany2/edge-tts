@@ -153,7 +153,7 @@ def main():
     """
     Main function.
     """
-    asyncio.run(_main())
+    asyncio.get_event_loop().run_until_complete(_main())
 
 
 if __name__ == "__main__":
