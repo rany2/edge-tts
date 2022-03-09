@@ -18,7 +18,7 @@ If you only want to use the `edge-tts` and `edge-playback` commands, it would be
 
 If you want to use the `edge-tts` command, you can simply run it with the following command:
 
-    $ edge-tts --text "Hello, world!" > hello.mp3
+    $ edge-tts --text "Hello, world!" --write-media hello.mp3
 
 If you wish to play it back immediately with subtitles, you could use the `edge-playback` command:
 
@@ -57,7 +57,7 @@ You must first check the available voices with the `--list-voices` option:
 
     ...
 
-    $ edge-tts --voice ar-EG-SalmaNeural --text "مرحبا كيف حالك؟" > hello_in_arabic.mp3
+    $ edge-tts --voice ar-EG-SalmaNeural --text "مرحبا كيف حالك؟" --write-media hello_in_arabic.mp3
 
 ### Custom SSML
 
@@ -83,7 +83,7 @@ It would be easiest to do the following:
 1. Create a file called `custom_ssml.xml` with the above content.
 2. Run the following command:
 
-       $ edge-tts --custom-ssml --file custom_ssml.xml > amazing.mp3
+       $ edge-tts --custom-ssml --file custom_ssml.xml --write-media amazing.mp3
 
 3. Voila!
 
@@ -91,9 +91,9 @@ It would be easiest to do the following:
 
 It is possible to make minor changes to the generated speech without resorting to custom SSML. However, you must note that you couldn't use the `--custom-ssml` option with the `--pitch`, `--rate`, `--volume`, etc. options.
 
-    $ edge-tts --pitch=-10Hz --text "Hello, world!" > hello_with_pitch_down.mp3
-    $ edge-tts --rate=0.5 --text "Hello, world!" > hello_with_rate_halved.mp3
-    $ edge-tts --volume=50 --text "Hello, world!" > hello_with_volume_halved.mp3
+    $ edge-tts --pitch=-10Hz --text "Hello, world!" --write-media hello_with_pitch_down.mp3
+    $ edge-tts --rate=0.5 --text "Hello, world!" --write-media hello_with_rate_halved.mp3
+    $ edge-tts --volume=50 --text "Hello, world!" --write-media hello_with_volume_halved.mp3
 
 Keep in mind that the `--pitch`, `--rate`, `--volume`, etc. options are applied to the entire SSML document.
 
