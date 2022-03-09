@@ -25,13 +25,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    # Fix for "RuntimeError: Event loop is closed" on Windows
-    # and Python 3.8+
-    if (
-        os.name == "nt"
-        and sys.version_info >= (3, 8)
-        and hasattr(asyncio, "WindowsSelectorEventLoopPolicy")
-    ):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
     asyncio.run(main())

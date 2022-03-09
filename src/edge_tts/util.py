@@ -5,7 +5,6 @@ Main package.
 
 import argparse
 import asyncio
-import os
 import sys
 
 from edge_tts import Communicate, SubMaker, list_voices
@@ -154,15 +153,6 @@ def main():
     """
     Main function.
     """
-    # Fix for "RuntimeError: Event loop is closed" on Windows
-    # and Python 3.8+
-    if (
-        os.name == "nt"
-        and sys.version_info >= (3, 8)
-        and hasattr(asyncio, "WindowsSelectorEventLoopPolicy")
-    ):
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
     asyncio.run(_main())
 
 
