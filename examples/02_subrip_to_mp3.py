@@ -121,7 +121,9 @@ async def _main(srt_data, voice_name, out_file):
                     try:
                         ensure_audio_length(fname, temporary_file.name, duration)
                     finally:
+                        temporary_file.close()
                         shutil.move(temporary_file.name, fname)
+                        temporary_file = None
 
             ffmpeg_opts = []
             for i in range(len(input_files)):
@@ -156,8 +158,11 @@ async def _main(srt_data, voice_name, out_file):
                     stderr=subprocess.DEVNULL,
                 )
             finally:
+                temporary_file2.close()
+                mother_temp_file.close()
                 shutil.move(temporary_file2.name, mother_temp_file.name)
     finally:
+        mother_temp_file.close()
         shutil.move(mother_temp_file.name, out_file)
     print("Done")
 
