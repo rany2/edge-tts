@@ -188,7 +188,7 @@ def main():
     parser = argparse.ArgumentParser(description="Converts srt to mp3 using edge-tts")
     parser.add_argument("srt_file", help="srt file to convert")
     parser.add_argument("out_file", help="output file")
-    parser.add_argument("--voice", help="voice name", default="en-US-SaraNerual")
+    parser.add_argument("--voice", help="voice name", default="en-US-SaraNeural")
     parser.add_argument("--default-speed", help="default speed", default="+0%")
     parser.add_argument("--default-pitch", help="default pitch", default="+0Hz")
     parser.add_argument("--default-volume", help="default volume", default="+0%")
