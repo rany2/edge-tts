@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import asyncio
 import os
 import shutil
@@ -66,7 +67,7 @@ def ensure_audio_length(in_file, out_file, length):
         shutil.copyfile(in_file, out_file)
 
 
-async def _main(srt_data, voice_name, out_file):
+async def _main(srt_data, voice_name, out_file, pitch, rate, volume):
     communicate = edge_tts.Communicate()
 
     max_duration = srt_data[-1][1].replace(",", ".").split("-->")[1]
@@ -119,7 +120,12 @@ async def _main(srt_data, voice_name, out_file):
                 duration = end - start
                 with open(fname, "wb") as f:
                     async for j in communicate.run(
-                        i[2], codec="audio-24khz-48kbitrate-mono-mp3", voice=voice_name
+                        i[2],
+                        codec="audio-24khz-48kbitrate-mono-mp3",
+                        pitch=pitch,
+                        rate=rate,
+                        volume=volume,
+                        voice=voice_name,
                     ):
                         if j[2] is not None:
                             f.write(j[2])
@@ -179,11 +185,32 @@ async def _main(srt_data, voice_name, out_file):
 
 
 def main():
-    srt_file = sys.argv[1]
-    voice_name = sys.argv[2]
-    srt_data = parse_srt(srt_file)
-    out_file = sys.argv[3]
-    asyncio.get_event_loop().run_until_complete(_main(srt_data, voice_name, out_file))
+    parser = argparse.ArgumentParser(description="Converts srt to mp3 using edge-tts")
+    parser.add_argument("srt_file", help="srt file to convert")
+    parser.add_argument("out_file", help="output file")
+    parser.add_argument("--voice", help="voice name", default="en-US-SaraNerual")
+    parser.add_argument("--default-speed", help="default speed", default="+0%")
+    parser.add_argument("--default-pitch", help="default pitch", default="+0Hz")
+    parser.add_argument("--default-volume", help="default volume", default="+0%")
+    args = parser.parse_args()
+
+    srt_data = parse_srt(args.srt_file)
+    voice_name = args.voice
+    out_file = args.out_file
+    speed = args.default_speed
+    pitch = args.default_pitch
+    volume = args.default_volume
+
+    asyncio.get_event_loop().run_until_complete(
+        _main(
+            srt_data=srt_data,
+            voice_name=voice_name,
+            out_file=out_file,
+            rate=speed,
+            pitch=pitch,
+            volume=volume,
+        )
+    )
 
 
 if __name__ == "__main__":
