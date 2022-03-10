@@ -15,7 +15,7 @@ if shutil.which("ffmpeg") is None:
 
 def parse_srt(srt_file):
     with open(srt_file, "r") as f:
-        data = f.read().split("\n\n")
+        data = f.read().strip().split("\n\n")
     data = [i.strip() for i in data]
     data = [(*i.split("\n")[:2], " ".join(i.split("\n")[2:])) for i in data]
     data = sorted(data, key=lambda x: int(x[0]))
