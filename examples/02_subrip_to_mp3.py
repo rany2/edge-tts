@@ -46,21 +46,24 @@ def ensure_audio_length(in_file, out_file, length):
         atempo = 0.5
     elif atempo > 100:
         atempo = 100
-    process = subprocess.call(
-        [
-            "ffmpeg",
-            "-y",
-            "-i",
-            in_file,
-            "-filter:a",
-            f"atempo={atempo}",
-            out_file,
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    if process != 0:
-        raise Exception("ffmpeg failed")
+    if atempo > 1:
+        process = subprocess.call(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                in_file,
+                "-filter:a",
+                f"atempo={atempo}",
+                out_file,
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if process != 0:
+            raise Exception("ffmpeg failed")
+    else:
+        shutil.copyfile(in_file, out_file)
 
 
 async def _main(srt_data, voice_name, out_file):
