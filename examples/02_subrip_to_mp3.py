@@ -71,7 +71,7 @@ async def _main(srt_data, voice_name, out_file):
     )
     mother_temp_file = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
     try:
-        subprocess.call(
+        process = subprocess.call(
             [
                 "ffmpeg",
                 "-y",
@@ -86,6 +86,8 @@ async def _main(srt_data, voice_name, out_file):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+        if process != 0:
+            raise Exception("ffmpeg failed")
 
         input_files = []
         input_files_start = {}
@@ -150,13 +152,15 @@ async def _main(srt_data, voice_name, out_file):
             temporary_file2 = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
             try:
                 print("Concatenating...")
-                subprocess.call(
+                process = subprocess.call(
                     ["ffmpeg", "-y", "-i", mother_temp_file.name]
                     + ffmpeg_opts
                     + [temporary_file2.name],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
+                    #stdout=subprocess.DEVNULL,
+                    #stderr=subprocess.DEVNULL,
                 )
+                if process != 0:
+                    raise Exception("ffmpeg failed")
             finally:
                 temporary_file2.close()
                 mother_temp_file.close()
