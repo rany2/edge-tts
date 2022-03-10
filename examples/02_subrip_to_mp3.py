@@ -13,6 +13,10 @@ if shutil.which("ffmpeg") is None:
     print("ffmpeg is not installed")
     exit(1)
 
+if shutil.which("ffprobe") is None:
+    print("ffprobe (part of ffmpeg) is not installed")
+    exit(1)
+
 
 def parse_srt(srt_file):
     with open(srt_file, "r", encoding="utf-8") as f:
@@ -156,8 +160,8 @@ async def _main(srt_data, voice_name, out_file):
                     ["ffmpeg", "-y", "-i", mother_temp_file.name]
                     + ffmpeg_opts
                     + [temporary_file2.name],
-                    #stdout=subprocess.DEVNULL,
-                    #stderr=subprocess.DEVNULL,
+                    # stdout=subprocess.DEVNULL,
+                    # stderr=subprocess.DEVNULL,
                 )
                 if process != 0:
                     raise Exception("ffmpeg failed")
