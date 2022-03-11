@@ -261,6 +261,12 @@ class Communicate:  # pylint: disable=too-few-public-methods
             if isinstance(messages, str):
                 messages = [messages]
 
+
+        # Variables for the loop
+        download = False
+        current_subtitle = ""
+        first_offset = None
+        last_offset = None
         async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.ws_connect(
                 f"{WSS_URL}&ConnectionId={connect_id()}",
@@ -317,10 +323,6 @@ class Communicate:  # pylint: disable=too-few-public-methods
                         )
 
                     # Begin listening for the response.
-                    download = False
-                    current_subtitle = ""
-                    first_offset = None
-                    last_offset = None
                     async for received in websocket:
                         if received.type in (
                             aiohttp.WSMsgType.CLOSED,
