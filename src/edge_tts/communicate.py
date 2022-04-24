@@ -214,6 +214,7 @@ class Communicate:  # pylint: disable=too-few-public-methods
         rate="+0%",
         volume="+0%",
         customspeak=False,
+        proxy=None,
     ):  # pylint: disable=too-many-arguments, too-many-locals
         """
         Runs the Communicate class.
@@ -273,6 +274,7 @@ class Communicate:  # pylint: disable=too-few-public-methods
                 compress=15,
                 autoclose=True,
                 autoping=True,
+                proxy=proxy,
                 headers={
                     "Pragma": "no-cache",
                     "Cache-Control": "no-cache",
