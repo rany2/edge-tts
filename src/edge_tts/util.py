@@ -39,6 +39,7 @@ async def _tts(args):
         args.rate,
         args.volume,
         customspeak=args.custom_ssml,
+        proxy=args.proxy,
     ):
         if i[2] is not None:
             if not args.write_media:
@@ -127,6 +128,10 @@ async def _main():
     parser.add_argument(
         "--write-subtitles",
         help="instead of stderr, send subtitle output to provided file",
+    )
+    parser.add_argument(
+        "--proxy",
+        help="proxy",
     )
     args = parser.parse_args()
 
