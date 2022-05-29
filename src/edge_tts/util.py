@@ -10,11 +10,11 @@ import sys
 from edge_tts import Communicate, SubMaker, list_voices
 
 
-async def _list_voices():
+async def _list_voices(proxy):
     """
     List available voices.
     """
-    for idx, voice in enumerate(await list_voices()):
+    for idx, voice in enumerate(await list_voices(proxy=proxy)):
         if idx != 0:
             print()
 
@@ -112,13 +112,13 @@ async def _main():
         "-O",
         "--overlapping",
         help="overlapping subtitles in seconds",
-        default=5,
+        default=1,
         type=float,
     )
     parser.add_argument(
         "-b",
         "--boundary-type",
-        help="set boundary type for subtitles. Default 0 for none. Set 1 for word_boundary, 2 for sentence_boundary",
+        help="set boundary type for subtitles. Default 0 for none. Set 1 for word_boundary.",
         default=0,
         type=int,
     )
@@ -136,7 +136,7 @@ async def _main():
     args = parser.parse_args()
 
     if args.list_voices:
-        await _list_voices()
+        await _list_voices(args.proxy)
         sys.exit(0)
 
     if args.text is not None or args.file is not None:

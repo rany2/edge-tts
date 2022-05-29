@@ -9,7 +9,7 @@ import aiohttp
 from .constants import VOICE_LIST
 
 
-async def list_voices():
+async def list_voices(proxy=None):
     """
     List all available voices and their attributes.
 
@@ -36,6 +36,7 @@ async def list_voices():
                 "Accept-Encoding": "gzip, deflate, br",
                 "Accept-Language": "en-US,en;q=0.9",
             },
+            proxy=proxy,
         ) as url:
             data = json.loads(await url.text())
     return data

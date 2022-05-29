@@ -28,7 +28,7 @@ def main():
             with subprocess.Popen(
                 [
                     "edge-tts",
-                    "--boundary-type=2",
+                    "--boundary-type=1",
                     f"--write-media={media.name}",
                     f"--write-subtitles={subtitle.name}",
                 ]

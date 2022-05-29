@@ -39,7 +39,7 @@ class SubMaker:
     SubMaker class
     """
 
-    def __init__(self, overlapping=5):
+    def __init__(self, overlapping=1):
         """
         SubMaker constructor.
 
@@ -48,7 +48,6 @@ class SubMaker:
                                subtitles should overlap.
         """
         self.subs_and_offset = []
-        self.broken_offset = 0
         self.overlapping = overlapping * (10**7)
 
     def create_sub(self, timestamp, text):
@@ -64,13 +63,6 @@ class SubMaker:
             None
         """
         timestamp[1] += timestamp[0]
-
-        if len(self.subs_and_offset) >= 2:
-            if self.subs_and_offset[-2][1] >= timestamp[0] + self.broken_offset:
-                self.broken_offset = self.subs_and_offset[-2][1]
-            timestamp[0] += self.broken_offset
-            timestamp[1] += self.broken_offset
-
         self.subs_and_offset.append(timestamp)
         self.subs_and_offset.append(text)
 

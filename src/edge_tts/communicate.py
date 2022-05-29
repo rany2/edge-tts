@@ -55,8 +55,8 @@ def remove_incompatible_characters(string):
 
     string = list(string)
 
-    for idx in range(len(string)):  # pylint: disable=consider-using-enumerate
-        code = ord(string[idx])
+    for idx, char in enumerate(string):
+        code = ord(char)
         if (0 <= code <= 8) or (11 <= code <= 12) or (14 <= code <= 31):
             string[idx] = " "
 
@@ -193,7 +193,7 @@ def ssml_headers_plus_data(request_id, timestamp, ssml):
     )
 
 
-class Communicate:  # pylint: disable=too-few-public-methods
+class Communicate:
     """
     Class for communicating with the service.
     """
@@ -215,7 +215,7 @@ class Communicate:  # pylint: disable=too-few-public-methods
         volume="+0%",
         customspeak=False,
         proxy=None,
-    ):  # pylint: disable=too-many-arguments, too-many-locals
+    ):
         """
         Runs the Communicate class.
 
@@ -234,14 +234,14 @@ class Communicate:  # pylint: disable=too-few-public-methods
         """
 
         word_boundary = False
-        sentence_boundary = False
 
         if boundary_type > 0:
             word_boundary = True
         if boundary_type > 1:
-            sentence_boundary = True
+            raise ValueError(
+                "Invalid boundary type. SentenceBoundary is no longer supported."
+            )
 
-        sentence_boundary = str(sentence_boundary).lower()
         word_boundary = str(word_boundary).lower()
 
         if not customspeak:
@@ -262,12 +262,8 @@ class Communicate:  # pylint: disable=too-few-public-methods
             if isinstance(messages, str):
                 messages = [messages]
 
-
         # Variables for the loop
         download = False
-        current_subtitle = ""
-        first_offset = None
-        last_offset = None
         async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.ws_connect(
                 f"{WSS_URL}&ConnectionId={connect_id()}",
@@ -304,7 +300,7 @@ class Communicate:  # pylint: disable=too-few-public-methods
                         "Content-Type:application/json; charset=utf-8\r\n"
                         "Path:speech.config\r\n\r\n"
                         '{"context":{"synthesis":{"audio":{"metadataoptions":{'
-                        f'"sentenceBoundaryEnabled":{sentence_boundary},'
+                        f'"sentenceBoundaryEnabled":false,'
                         f'"wordBoundaryEnabled":{word_boundary}}},"outputFormat":"{codec}"'
                         "}}}}\r\n"
                     )
@@ -326,12 +322,6 @@ class Communicate:  # pylint: disable=too-few-public-methods
 
                     # Begin listening for the response.
                     async for received in websocket:
-                        if received.type in (
-                            aiohttp.WSMsgType.CLOSED,
-                            aiohttp.WSMsgType.ERROR,
-                        ):
-                            break
-
                         if received.type == aiohttp.WSMsgType.TEXT:
                             parameters, data = get_headers_and_data(received.data)
                             if (
@@ -358,12 +348,15 @@ class Communicate:  # pylint: disable=too-few-public-methods
                                     metadata_duration = metadata["Metadata"][0]["Data"][
                                         "Duration"
                                     ]
-                                except KeyError:
-                                    metadata_duration = 0
+                                except KeyError as exception:
+                                    raise ValueError(
+                                        "The metadata doesn't contain a Duration field. "
+                                        + "This usually happens when SentenceBoundary metadata type is sent."
+                                    ) from exception
                                 metadata_text = metadata["Metadata"][0]["Data"]["text"][
                                     "Text"
                                 ]
-                                if boundary_type == 1:
+                                if metadata_type == "WordBoundary":
                                     yield (
                                         [
                                             metadata_offset,
@@ -372,31 +365,32 @@ class Communicate:  # pylint: disable=too-few-public-methods
                                         metadata_text,
                                         None,
                                     )
+                                elif metadata_type == "SentenceBoundary":
+                                    raise NotImplementedError(
+                                        "SentenceBoundary is not supported due to being broken."
+                                    )
                                 else:
-                                    if metadata_type == "WordBoundary":
-                                        if current_subtitle:
-                                            current_subtitle += " "
-                                        current_subtitle += metadata_text
-                                        if first_offset is None:
-                                            first_offset = metadata_offset
-                                        last_offset = [
-                                            metadata_offset,
-                                            metadata_duration,
-                                        ]
-                                    elif metadata_type == "SentenceBoundary":
-                                        if current_subtitle:
-                                            yield (
-                                                [
-                                                    first_offset,
-                                                    sum(last_offset) - first_offset,
-                                                ],
-                                                current_subtitle,
-                                                None,
-                                            )
-                                        current_subtitle = ""
-                                        first_offset = None
-                                        last_offset = None
+                                    raise NotImplementedError(
+                                        f"Unknown metadata type: {metadata_type}"
+                                    )
+                            elif (
+                                "Path" in parameters
+                                and parameters["Path"] == "response"
+                            ):
+                                # TODO: implement this:
+                                """
+                                X-RequestId:xxxxxxxxxxxxxxxxxxxxxxxxx
+                                Content-Type:application/json; charset=utf-8
+                                Path:response
 
+                                {"context":{"serviceTag":"yyyyyyyyyyyyyyyyyyy"},"audio":{"type":"inline","streamId":"zzzzzzzzzzzzzzzzz"}}
+                                """
+                                pass
+                            else:
+                                raise ValueError(
+                                    "The response from the service is not recognized.\n"
+                                    + received.data
+                                )
                         elif received.type == aiohttp.WSMsgType.BINARY:
                             if download:
                                 yield (
@@ -406,10 +400,8 @@ class Communicate:  # pylint: disable=too-few-public-methods
                                         received.data.split(b"Path:audio\r\n")[1:]
                                     ),
                                 )
-                if current_subtitle:
-                    yield (
-                        [first_offset, sum(last_offset) - first_offset],
-                        current_subtitle,
-                        None,
-                    )
+                            else:
+                                raise ValueError(
+                                    "The service sent a binary message, but we are not expecting one."
+                                )
                 await websocket.close()
