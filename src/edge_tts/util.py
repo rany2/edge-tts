@@ -38,7 +38,6 @@ async def _tts(args):
         args.pitch,
         args.rate,
         args.volume,
-        customspeak=args.custom_ssml,
         proxy=args.proxy,
     ):
         if i[2] is not None:
@@ -62,12 +61,6 @@ async def _main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-t", "--text", help="what TTS will say")
     group.add_argument("-f", "--file", help="same as --text but read from file")
-    parser.add_argument(
-        "-z",
-        "--custom-ssml",
-        help="treat text as ssml to send. For more info check https://bit.ly/3fIq13S",
-        action="store_true",
-    )
     parser.add_argument(
         "-v",
         "--voice",

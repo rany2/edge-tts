@@ -61,35 +61,11 @@ You must first check the available voices with the `--list-voices` option:
 
 ### Custom SSML
 
-It is possible to send Microsoft's text-to-speech servers a custom SSML document which would allow greater customization of the speech. 
-
-Information about the SSML format can be found here on Microsoft's own website: https://docs.microsoft.com/en-us/azure/cognitive-services/speech-service/speech-synthesis-markup
-
-As a short example, if you want to apply the following SSML document and play it back using `edge-tts`.
-
-```
-<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"
-       xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-US">
-    <voice name="en-US-AriaNeural">
-        <mstts:express-as style="cheerful">
-            That'd be just amazing!
-        </mstts:express-as>
-    </voice>
-</speak>
-```
-
-It would be easiest to do the following:
-
-1. Create a file called `custom_ssml.xml` with the above content.
-2. Run the following command:
-
-       $ edge-tts --custom-ssml --file custom_ssml.xml --write-media amazing.mp3
-
-3. Voila!
+Support for custom SSML has been removed since 5.0.0 because Microsoft has taken the initiative to prevent it from working. You cannot use custom SSML anymore.
 
 ### Changing pitch, rate, volume, etc.
 
-It is possible to make minor changes to the generated speech without resorting to custom SSML. However, you must note that you couldn't use the `--custom-ssml` option with the `--pitch`, `--rate`, `--volume`, etc. options.
+It is possible to make minor changes to the generated speech.
 
     $ edge-tts --pitch=-10Hz --text "Hello, world!" --write-media hello_with_pitch_down.mp3
     $ edge-tts --rate=0.5 --text "Hello, world!" --write-media hello_with_rate_halved.mp3

@@ -213,7 +213,6 @@ class Communicate:
         pitch="+0Hz",
         rate="+0%",
         volume="+0%",
-        customspeak=False,
         proxy=None,
     ):
         """
@@ -223,11 +222,10 @@ class Communicate:
             messages (str or list): A list of SSML strings or a single text.
             boundery_type (int): The type of boundary to use. 0 for none, 1 for word_boundary, 2 for sentence_boundary.
             codec (str): The codec to use.
-            voice (str): The voice to use (only applicable to non-customspeak).
-            pitch (str): The pitch to use (only applicable to non-customspeak).
-            rate (str): The rate to use (only applicable to non-customspeak).
-            volume (str): The volume to use (only applicable to non-customspeak).
-            customspeak (bool): Whether to create the SSML or treat the messages as SSML.
+            voice (str): The voice to use.
+            pitch (str): The pitch to use.
+            rate (str): The rate to use.
+            volume (str): The volume to use.
 
         Yields:
             tuple: The subtitle offset, subtitle, and audio data.
@@ -244,23 +242,19 @@ class Communicate:
 
         word_boundary = str(word_boundary).lower()
 
-        if not customspeak:
-            websocket_max_size = 2**16
-            overhead_per_message = (
-                len(
-                    ssml_headers_plus_data(
-                        connect_id(), self.date, mkssml("", voice, pitch, rate, volume)
-                    )
+        websocket_max_size = 2**16
+        overhead_per_message = (
+            len(
+                ssml_headers_plus_data(
+                    connect_id(), self.date, mkssml("", voice, pitch, rate, volume)
                 )
-                + 50
-            )  # margin of error
-            messages = split_text_by_byte_length(
-                escape(remove_incompatible_characters(messages)),
-                websocket_max_size - overhead_per_message,
             )
-        else:
-            if isinstance(messages, str):
-                messages = [messages]
+            + 50
+        )  # margin of error
+        messages = split_text_by_byte_length(
+            escape(remove_incompatible_characters(messages)),
+            websocket_max_size - overhead_per_message,
+        )
 
         # Variables for the loop
         download = False
@@ -307,18 +301,13 @@ class Communicate:
                     # Send the request to the service.
                     await websocket.send_str(request)
                     # Send the message itself.
-                    if not customspeak:
-                        await websocket.send_str(
-                            ssml_headers_plus_data(
-                                connect_id(),
-                                self.date,
-                                mkssml(message, voice, pitch, rate, volume),
-                            )
+                    await websocket.send_str(
+                        ssml_headers_plus_data(
+                            connect_id(),
+                            self.date,
+                            mkssml(message, voice, pitch, rate, volume),
                         )
-                    else:
-                        await websocket.send_str(
-                            ssml_headers_plus_data(connect_id(), self.date, message)
-                        )
+                    )
 
                     # Begin listening for the response.
                     async for received in websocket:
