@@ -242,7 +242,7 @@ class Communicate:
 
         word_boundary = str(word_boundary).lower()
 
-        websocket_max_size = 2**16
+        websocket_max_size = 2 ** 16
         overhead_per_message = (
             len(
                 ssml_headers_plus_data(
@@ -337,9 +337,9 @@ class Communicate:
                                     metadata_duration = metadata["Metadata"][0]["Data"][
                                         "Duration"
                                     ]
-                                    metadata_text = metadata["Metadata"][0]["Data"]["text"][
-                                        "Text"
-                                    ]
+                                    metadata_text = metadata["Metadata"][0]["Data"][
+                                        "text"
+                                    ]["Text"]
                                     yield (
                                         [
                                             metadata_offset,
