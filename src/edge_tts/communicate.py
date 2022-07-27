@@ -333,19 +333,13 @@ class Communicate:
                                 metadata_offset = metadata["Metadata"][0]["Data"][
                                     "Offset"
                                 ]
-                                try:
+                                if metadata_type == "WordBoundary":
                                     metadata_duration = metadata["Metadata"][0]["Data"][
                                         "Duration"
                                     ]
-                                except KeyError as exception:
-                                    raise ValueError(
-                                        "The metadata doesn't contain a Duration field. "
-                                        + "This usually happens when SentenceBoundary metadata type is sent."
-                                    ) from exception
-                                metadata_text = metadata["Metadata"][0]["Data"]["text"][
-                                    "Text"
-                                ]
-                                if metadata_type == "WordBoundary":
+                                    metadata_text = metadata["Metadata"][0]["Data"]["text"][
+                                        "Text"
+                                    ]
                                     yield (
                                         [
                                             metadata_offset,
@@ -358,6 +352,8 @@ class Communicate:
                                     raise NotImplementedError(
                                         "SentenceBoundary is not supported due to being broken."
                                     )
+                                elif metadata_type == "SessionEnd":
+                                    continue
                                 else:
                                     raise NotImplementedError(
                                         f"Unknown metadata type: {metadata_type}"
