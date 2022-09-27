@@ -4,6 +4,6 @@ from setuptools import setup
 setup(
     name="edge-tts",
     install_requires=[
-        "aiohttp==3.8.3",
+        "aiohttp>=3.8.0",
     ],
 )
