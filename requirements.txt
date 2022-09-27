@@ -7,5 +7,5 @@ frozenlist==1.3.1
 idna==3.4
 multidict==6.0.2
 pip==22.2.2
-setuptools==62.6.0
+setuptools==65.4.0
 yarl==1.8.1
