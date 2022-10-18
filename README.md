@@ -81,4 +81,10 @@ In addition, it is required to use `--pitch=-10Hz` instead of `--pitch -10Hz` ot
 
 ## Python module
 
-It is possible to use the `edge-tts` module directly from Python. The `examples` directory contains a few examples of how to use it.
+It is possible to use the `edge-tts` module directly from Python. For a list of example applications:
+
+* https://github.com/rany2/edge-tts/blob/master/examples/input_example.py
+* https://github.com/rany2/edge-tts/blob/master/src/edge_tts/util.py
+* https://github.com/rany2/edge-srt-to-speech/blob/master/src/edge_srt_to_speech/__main__.py
+* https://github.com/hasscc/hass-edge-tts/blob/main/custom_components/edge_tts/tts.py
+* https://github.com/rany2/edge-tts/network/dependents
