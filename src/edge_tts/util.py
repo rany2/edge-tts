@@ -120,7 +120,7 @@ async def _main():
     )
     parser.add_argument(
         "--write-subtitles",
-        help="instead of stderr, send subtitle output to provided file",
+        help="instead of stderr, send subtitle output to provided file (implies boundary-type is 1)",
     )
     parser.add_argument(
         "--proxy",
@@ -131,6 +131,9 @@ async def _main():
     if args.list_voices:
         await _list_voices(args.proxy)
         sys.exit(0)
+
+    if args.write_subtitles and args.boundary_type == 0:
+        args.boundary_type = 1
 
     if args.text is not None or args.file is not None:
         if args.file is not None:
