@@ -1,5 +1,6 @@
 """Exceptions for the Edge TTS project."""
 
+
 class UnknownResponse(Exception):
     """Raised when an unknown response is received from the server."""
 
