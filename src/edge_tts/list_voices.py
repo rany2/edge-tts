@@ -48,6 +48,9 @@ class VoicesManager:
 
     @classmethod
     async def create(cls):
+        """
+        Creates a VoicesManager object and populates it with all available voices.
+        """
         self = VoicesManager()
         self.voices = await list_voices()
         self.voices = [
