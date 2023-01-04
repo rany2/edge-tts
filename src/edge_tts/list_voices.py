@@ -3,7 +3,7 @@ list_voices package for edge_tts.
 """
 
 import json
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
@@ -47,8 +47,12 @@ class VoicesManager:
     A class to find the correct voice based on their attributes.
     """
 
+    def __init__(self) -> None:
+        self.voices: List[Dict[str, Any]] = []
+        self.called_create: bool = False
+
     @classmethod
-    async def create(cls): # type: ignore
+    async def create(cls: Any) -> "VoicesManager":
         """
         Creates a VoicesManager object and populates it with all available voices.
         """
@@ -58,14 +62,19 @@ class VoicesManager:
             {**voice, **{"Language": voice["Locale"].split("-")[0]}}
             for voice in self.voices
         ]
+        self.called_create = True
         return self
 
-    def find(self, **kwargs: Any) -> list[dict[str, Any]]:
+    def find(self, **kwargs: Any) -> List[Dict[str, Any]]:
         """
         Finds all matching voices based on the provided attributes.
         """
+        if not self.called_create:
+            raise RuntimeError(
+                "VoicesManager.find() called before VoicesManager.create()"
+            )
 
         matching_voices = [
-            voice for voice in self.voices if kwargs.items() <= voice.items() # type: ignore
+            voice for voice in self.voices if kwargs.items() <= voice.items()
         ]
         return matching_voices

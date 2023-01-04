@@ -5,8 +5,8 @@ Main package.
 
 import argparse
 import asyncio
-from io import BufferedWriter
 import sys
+from io import BufferedWriter
 from typing import Any
 
 from edge_tts import Communicate, SubMaker, list_voices
@@ -45,7 +45,7 @@ async def _run_tts(args: Any) -> None:
                 if isinstance(media_file, BufferedWriter):
                     media_file.write(data["data"])
                 else:
-                    sys.stdout.buffer.write(data["data"])                    
+                    sys.stdout.buffer.write(data["data"])
             elif data["type"] == "WordBoundary":
                 subs.create_sub((data["offset"], data["duration"]), data["text"])
 

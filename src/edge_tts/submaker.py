@@ -78,7 +78,9 @@ class SubMaker:
             data = "WEBVTT\r\n\r\n"
             for offset, subs in zip(self.offset, self.subs):
                 subs = unescape(subs)
-                split_subs: List[str] = [subs[i : i + 79] for i in range(0, len(subs), 79)]
+                split_subs: List[str] = [
+                    subs[i : i + 79] for i in range(0, len(subs), 79)
+                ]
 
                 for i in range(len(split_subs) - 1):
                     sub = split_subs[i]
