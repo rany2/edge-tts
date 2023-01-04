@@ -28,9 +28,9 @@ def mktimestamp(time_unit):
     Returns:
         str: The timecode of the subtitle.
     """
-    hour = math.floor(time_unit / 10 ** 7 / 3600)
-    minute = math.floor((time_unit / 10 ** 7 / 60) % 60)
-    seconds = (time_unit / 10 ** 7) % 60
+    hour = math.floor(time_unit / 10**7 / 3600)
+    minute = math.floor((time_unit / 10**7 / 60) % 60)
+    seconds = (time_unit / 10**7) % 60
     return f"{hour:02d}:{minute:02d}:{seconds:06.3f}"
 
 
@@ -48,7 +48,7 @@ class SubMaker:
                                subtitles should overlap.
         """
         self.subs_and_offset = []
-        self.overlapping = overlapping * (10 ** 7)
+        self.overlapping = overlapping * (10**7)
 
     def create_sub(self, timestamp, text):
         """
