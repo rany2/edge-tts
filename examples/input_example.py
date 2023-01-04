@@ -4,25 +4,21 @@ Example Python script that shows how to use edge-tts as a module
 """
 
 import asyncio
-import tempfile
-
-from playsound import playsound
-
 import edge_tts
-
 
 async def main():
     """
     Main function
     """
-    communicate = edge_tts.Communicate()
-    ask = input("What do you want TTS to say? ")
-    with tempfile.NamedTemporaryFile() as temporary_file:
-        async for i in communicate.run(ask):
-            if i[2] is not None:
-                temporary_file.write(i[2])
-        playsound(temporary_file.name)
+    TEXT = "Hello World!"
+    VOICE = "en-GB-SoniaNeural"
+    OUTPUT_FILE = "test.mp3"
 
+    communicate = edge_tts.Communicate()
+    with open(OUTPUT_FILE, "wb") as f:
+        async for i in communicate.run(TEXT, voice=VOICE):
+            if i[2] is not None:
+                f.write(i[2])
 
 if __name__ == "__main__":
     asyncio.get_event_loop().run_until_complete(main())
