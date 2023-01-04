@@ -21,7 +21,7 @@ async def main():
     OUTPUT_FILE = "spanish.mp3"
 
     communicate = edge_tts.Communicate(TEXT, VOICE)
-    communicate.save(OUTPUT_FILE)
+    await communicate.save(OUTPUT_FILE)
 
 
 if __name__ == "__main__":
