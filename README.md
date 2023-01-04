@@ -85,5 +85,7 @@ It is possible to use the `edge-tts` module directly from Python. For a list of 
 
 * https://github.com/rany2/edge-tts/blob/master/examples/basic_generation.py
 * https://github.com/rany2/edge-tts/blob/master/examples/dynamic_voice_selection.py
+* https://github.com/rany2/edge-tts/blob/master/examples/streaming_tts.py
+* https://github.com/rany2/edge-tts/blob/master/examples/streaming_tts_with_subtitles.py
 * https://github.com/rany2/edge-tts/blob/master/src/edge_tts/util.py
 * https://github.com/hasscc/hass-edge-tts/blob/main/custom_components/edge_tts/tts.py
