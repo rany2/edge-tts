@@ -7,9 +7,9 @@ on:
     branches: [ "master" ]
 
 jobs:
-  code-quality:
+  lint:
     runs-on: ubuntu-latest
-    name: "Check code quality"
+    name: "Lint"
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -18,7 +18,7 @@ jobs:
     - name: Install all dependencies
       run: pip install .[dev]
     - name: Run mypy
-      run: mypy --pretty .
+      run: mypy --pretty src examples
     - name: Run isort
       run: isort --check-only --diff .
     - name: Run black
