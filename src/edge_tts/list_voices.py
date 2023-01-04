@@ -40,3 +40,29 @@ async def list_voices(proxy=None):
         ) as url:
             data = json.loads(await url.text())
     return data
+
+
+class VoicesManager:
+    """
+    A class to find the correct voice based on their attributes.
+    """
+
+    @classmethod
+    async def create(cls):
+        self = VoicesManager()
+        self.voices = await list_voices()
+        self.voices = [
+            {**voice, **{"Language": voice["Locale"].split("-")[0]}}
+            for voice in self.voices
+        ]
+        return self
+
+    def find(self, **kwargs):
+        """
+        Finds all matching voices based on the provided attributes.
+        """
+
+        matching_voices = [
+            voice for voice in self.voices if kwargs.items() <= voice.items()
+        ]
+        return matching_voices
