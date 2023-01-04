@@ -1,0 +1,25 @@
+name: "Check code quality"
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    name: "Check code quality"
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+    - name: Install all dependencies
+      run: pip install .[dev]
+    - name: Run mypy
+      run: mypy --pretty .
+    - name: Run isort
+      run: isort --check-only --diff .
+    - name: Run black
+      run: black --check --diff .

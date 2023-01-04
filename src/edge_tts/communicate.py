@@ -12,8 +12,7 @@ from xml.sax.saxutils import escape
 
 import aiohttp
 
-from edge_tts.exceptions import (NoAudioReceived, UnexpectedResponse,
-                                 UnknownResponse)
+from edge_tts.exceptions import NoAudioReceived, UnexpectedResponse, UnknownResponse
 
 from .constants import WSS_URL
 
