@@ -12,7 +12,8 @@ from xml.sax.saxutils import escape
 
 import aiohttp
 
-from edge_tts.exceptions import *
+from edge_tts.exceptions import (NoAudioReceived, UnexpectedResponse,
+                                 UnknownResponse)
 
 from .constants import WSS_URL
 
@@ -207,7 +208,6 @@ class Communicate:
             ValueError: If the voice is not valid.
         """
         self.text = text
-        self.boundary_type = 1
         self.codec = "audio-24khz-48kbitrate-mono-mp3"
         self.voice = voice
         # Possible values for voice are:
@@ -284,7 +284,7 @@ class Communicate:
                     # download indicates whether we should be expecting audio data,
                     # this is so what we avoid getting binary data from the websocket
                     # and falsely thinking it's audio data.
-                    download = False
+                    download_audio = False
 
                     # audio_was_received indicates whether we have received audio data
                     # from the websocket. This is so we can raise an exception if we
@@ -332,12 +332,12 @@ class Communicate:
                                 "Path" in parameters
                                 and parameters["Path"] == "turn.start"
                             ):
-                                download = True
+                                download_audio = True
                             elif (
                                 "Path" in parameters
                                 and parameters["Path"] == "turn.end"
                             ):
-                                download = False
+                                download_audio = False
                                 break
                             elif (
                                 "Path" in parameters
@@ -376,15 +376,6 @@ class Communicate:
                                 "Path" in parameters
                                 and parameters["Path"] == "response"
                             ):
-                                # TODO: implement this:
-                                """
-                                X-RequestId:xxxxxxxxxxxxxxxxxxxxxxxxx
-                                Content-Type:application/json; charset=utf-8
-                                Path:response
-
-                                {"context":{"serviceTag":"yyyyyyyyyyyyyyyyyyy"},"audio":
-                                {"type":"inline","streamId":"zzzzzzzzzzzzzzzzz"}}
-                                """
                                 pass
                             else:
                                 raise UnknownResponse(
@@ -392,7 +383,7 @@ class Communicate:
                                     + received.data
                                 )
                         elif received.type == aiohttp.WSMsgType.BINARY:
-                            if download:
+                            if download_audio:
                                 yield {
                                     "type": "audio",
                                     "data": b"Path:audio\r\n".join(
@@ -402,12 +393,12 @@ class Communicate:
                                 audio_was_received = True
                             else:
                                 raise UnexpectedResponse(
-                                    "The service sent a binary message, but we are not expecting one."
+                                    "We received a binary message, but we are not expecting one."
                                 )
 
                     if not audio_was_received:
                         raise NoAudioReceived(
-                            "No audio was received from the service. Please verify that your parameters are correct."
+                            "No audio was received. Please verify that your parameters are correct."
                         )
 
     async def save(

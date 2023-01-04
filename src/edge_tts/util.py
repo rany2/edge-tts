@@ -10,7 +10,8 @@ import sys
 from edge_tts import Communicate, SubMaker, list_voices
 
 
-async def _list_voices(proxy):
+async def _print_voices(proxy):
+    """Print all available voices."""
     for idx, voice in enumerate(await list_voices(proxy=proxy)):
         if idx != 0:
             print()
@@ -22,7 +23,8 @@ async def _list_voices(proxy):
             print(f"{key}: {voice[key]}")
 
 
-async def _tts(args):
+async def _run_tts(args):
+    """Run TTS after parsing arguments from command line."""
     tts = await Communicate(
         args.text,
         args.voice,
@@ -33,6 +35,7 @@ async def _tts(args):
     try:
         media_file = None
         if args.write_media:
+            # pylint: disable=consider-using-with
             media_file = open(args.write_media, "wb")
 
         subs = SubMaker(args.overlapping)
@@ -55,7 +58,7 @@ async def _tts(args):
             media_file.close()
 
 
-async def _main():
+async def _async_main():
     parser = argparse.ArgumentParser(description="Microsoft Edge TTS")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-t", "--text", help="what TTS will say")
@@ -108,7 +111,7 @@ async def _main():
     args = parser.parse_args()
 
     if args.list_voices:
-        await _list_voices(args.proxy)
+        await _print_voices(args.proxy)
         sys.exit(0)
 
     if args.text is not None or args.file is not None:
@@ -123,11 +126,12 @@ async def _main():
                 with open(args.file, "r", encoding="utf-8") as file:
                     args.text = file.read()
 
-        await _tts(args)
+        await _run_tts(args)
 
 
 def main():
-    asyncio.get_event_loop().run_until_complete(_main())
+    """Run the main function using asyncio."""
+    asyncio.get_event_loop().run_until_complete(_async_main())
 
 
 if __name__ == "__main__":

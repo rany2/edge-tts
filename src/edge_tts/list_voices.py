@@ -1,5 +1,5 @@
 """
-list_voices package.
+list_voices package for edge_tts.
 """
 
 import json
@@ -9,13 +9,12 @@ import aiohttp
 from .constants import VOICE_LIST
 
 
-async def list_voices(proxy=None):
+async def list_voices(*, proxy=None):
     """
     List all available voices and their attributes.
 
     This pulls data from the URL used by Microsoft Edge to return a list of
-    all available voices. However many more experimental voices are available
-    than are listed here. (See https://aka.ms/csspeech/voicenames)
+    all available voices.
 
     Returns:
         dict: A dictionary of voice attributes.
