@@ -3,13 +3,14 @@ list_voices package for edge_tts.
 """
 
 import json
+from typing import Any, Optional
 
 import aiohttp
 
 from .constants import VOICE_LIST
 
 
-async def list_voices(*, proxy=None):
+async def list_voices(*, proxy: Optional[str] = None) -> Any:
     """
     List all available voices and their attributes.
 
@@ -47,7 +48,7 @@ class VoicesManager:
     """
 
     @classmethod
-    async def create(cls):
+    async def create(cls): # type: ignore
         """
         Creates a VoicesManager object and populates it with all available voices.
         """
@@ -59,12 +60,12 @@ class VoicesManager:
         ]
         return self
 
-    def find(self, **kwargs):
+    def find(self, **kwargs: Any) -> list[dict[str, Any]]:
         """
         Finds all matching voices based on the provided attributes.
         """
 
         matching_voices = [
-            voice for voice in self.voices if kwargs.items() <= voice.items()
+            voice for voice in self.voices if kwargs.items() <= voice.items() # type: ignore
         ]
         return matching_voices

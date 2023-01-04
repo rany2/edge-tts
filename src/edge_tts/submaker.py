@@ -6,10 +6,11 @@ information provided by the service easier.
 """
 
 import math
+from typing import List, Tuple
 from xml.sax.saxutils import escape, unescape
 
 
-def formatter(offset1, offset2, subdata):
+def formatter(offset1: float, offset2: float, subdata: str) -> str:
     """
     formatter returns the timecode and the text of the subtitle.
     """
@@ -19,7 +20,7 @@ def formatter(offset1, offset2, subdata):
     )
 
 
-def mktimestamp(time_unit):
+def mktimestamp(time_unit: float) -> str:
     """
     mktimestamp returns the timecode of the subtitle.
 
@@ -39,7 +40,7 @@ class SubMaker:
     SubMaker class
     """
 
-    def __init__(self, overlapping=1):
+    def __init__(self, overlapping: int = 1) -> None:
         """
         SubMaker constructor.
 
@@ -47,10 +48,11 @@ class SubMaker:
             overlapping (int): The amount of time in seconds that the
                                subtitles should overlap.
         """
-        self.subs_and_offset = []
-        self.overlapping = overlapping * (10**7)
+        self.offset: List[Tuple[float, float]] = []
+        self.subs: List[str] = []
+        self.overlapping: int = overlapping * (10**7)
 
-    def create_sub(self, timestamp, text):
+    def create_sub(self, timestamp: Tuple[float, float], text: str) -> None:
         """
         create_sub creates a subtitle with the given timestamp and text
         and adds it to the list of subtitles
@@ -62,40 +64,37 @@ class SubMaker:
         Returns:
             None
         """
-        timestamp[1] += timestamp[0]
-        self.subs_and_offset.append(timestamp)
-        self.subs_and_offset.append(text)
+        self.offset.append((timestamp[0], timestamp[0] + timestamp[1]))
+        self.subs.append(text)
 
-    def generate_subs(self):
+    def generate_subs(self) -> str:
         """
         generate_subs generates the complete subtitle file.
 
         Returns:
             str: The complete subtitle file.
         """
-        if len(self.subs_and_offset) >= 2:
+        if len(self.subs) == len(self.offset):
             data = "WEBVTT\r\n\r\n"
-            for offset, subs in zip(
-                self.subs_and_offset[::2], self.subs_and_offset[1::2]
-            ):
+            for offset, subs in zip(self.offset, self.subs):
                 subs = unescape(subs)
-                subs = [subs[i : i + 79] for i in range(0, len(subs), 79)]
+                split_subs: List[str] = [subs[i : i + 79] for i in range(0, len(subs), 79)]
 
-                for i in range(len(subs) - 1):
-                    sub = subs[i]
+                for i in range(len(split_subs) - 1):
+                    sub = split_subs[i]
                     split_at_word = True
                     if sub[-1] == " ":
-                        subs[i] = sub[:-1]
+                        split_subs[i] = sub[:-1]
                         split_at_word = False
 
                     if sub[0] == " ":
-                        subs[i] = sub[1:]
+                        split_subs[i] = sub[1:]
                         split_at_word = False
 
                     if split_at_word:
-                        subs[i] += "-"
+                        split_subs[i] += "-"
 
-                subs = "\r\n".join(subs)
+                subs = "\r\n".join(split_subs)
 
                 data += formatter(offset[0], offset[1] + self.overlapping, subs)
             return data

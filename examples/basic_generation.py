@@ -9,7 +9,7 @@ import asyncio
 import edge_tts
 
 
-async def main():
+async def main() -> None:
     TEXT = "Hello World!"
     VOICE = "en-GB-SoniaNeural"
     OUTPUT_FILE = "test.mp3"

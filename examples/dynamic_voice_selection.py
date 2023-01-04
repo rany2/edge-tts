@@ -11,7 +11,7 @@ import edge_tts
 from edge_tts import VoicesManager
 
 
-async def main():
+async def main() -> None:
     voices = await VoicesManager.create()
     voice = voices.find(Gender="Male", Language="es")
     # Also supports Locales

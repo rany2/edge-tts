@@ -5,12 +5,14 @@ Main package.
 
 import argparse
 import asyncio
+from io import BufferedWriter
 import sys
+from typing import Any
 
 from edge_tts import Communicate, SubMaker, list_voices
 
 
-async def _print_voices(proxy):
+async def _print_voices(*, proxy: str) -> None:
     """Print all available voices."""
     for idx, voice in enumerate(await list_voices(proxy=proxy)):
         if idx != 0:
@@ -23,9 +25,9 @@ async def _print_voices(proxy):
             print(f"{key}: {voice[key]}")
 
 
-async def _run_tts(args):
+async def _run_tts(args: Any) -> None:
     """Run TTS after parsing arguments from command line."""
-    tts = await Communicate(
+    tts = Communicate(
         args.text,
         args.voice,
         proxy=args.proxy,
@@ -35,18 +37,17 @@ async def _run_tts(args):
     try:
         media_file = None
         if args.write_media:
-            # pylint: disable=consider-using-with
             media_file = open(args.write_media, "wb")
 
         subs = SubMaker(args.overlapping)
         async for data in tts.stream():
             if data["type"] == "audio":
-                if not args.write_media:
-                    sys.stdout.buffer.write(data["data"])
-                else:
+                if isinstance(media_file, BufferedWriter):
                     media_file.write(data["data"])
+                else:
+                    sys.stdout.buffer.write(data["data"])                    
             elif data["type"] == "WordBoundary":
-                subs.create_sub([data["offset"], data["duration"]], data["text"])
+                subs.create_sub((data["offset"], data["duration"]), data["text"])
 
         if not args.write_subtitles:
             sys.stderr.write(subs.generate_subs())
@@ -58,7 +59,7 @@ async def _run_tts(args):
             media_file.close()
 
 
-async def _async_main():
+async def _async_main() -> None:
     parser = argparse.ArgumentParser(description="Microsoft Edge TTS")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-t", "--text", help="what TTS will say")
@@ -111,7 +112,7 @@ async def _async_main():
     args = parser.parse_args()
 
     if args.list_voices:
-        await _print_voices(args.proxy)
+        await _print_voices(proxy=args.proxy)
         sys.exit(0)
 
     if args.text is not None or args.file is not None:
@@ -129,7 +130,7 @@ async def _async_main():
         await _run_tts(args)
 
 
-def main():
+def main() -> None:
     """Run the main function using asyncio."""
     asyncio.get_event_loop().run_until_complete(_async_main())
 
