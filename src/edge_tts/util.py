@@ -6,14 +6,14 @@ Main package.
 import argparse
 import asyncio
 import sys
+from io import BufferedWriter
+from typing import Any
 
 from edge_tts import Communicate, SubMaker, list_voices
 
 
-async def _list_voices(proxy):
-    """
-    List available voices.
-    """
+async def _print_voices(*, proxy: str) -> None:
+    """Print all available voices."""
     for idx, voice in enumerate(await list_voices(proxy=proxy)):
         if idx != 0:
             print()
@@ -25,38 +25,41 @@ async def _list_voices(proxy):
             print(f"{key}: {voice[key]}")
 
 
-async def _tts(args):
-    tts = Communicate()
-    subs = SubMaker(args.overlapping)
-    if args.write_media:
-        media_file = open(args.write_media, "wb")  # pylint: disable=consider-using-with
-    async for i in tts.run(
+async def _run_tts(args: Any) -> None:
+    """Run TTS after parsing arguments from command line."""
+    tts = Communicate(
         args.text,
-        args.boundary_type,
-        args.codec,
         args.voice,
-        args.pitch,
-        args.rate,
-        args.volume,
         proxy=args.proxy,
-    ):
-        if i[2] is not None:
-            if not args.write_media:
-                sys.stdout.buffer.write(i[2])
-            else:
-                media_file.write(i[2])
-        elif i[0] is not None and i[1] is not None:
-            subs.create_sub(i[0], i[1])
-    if args.write_media:
-        media_file.close()
-    if not args.write_subtitles:
-        sys.stderr.write(subs.generate_subs())
-    else:
-        with open(args.write_subtitles, "w", encoding="utf-8") as file:
-            file.write(subs.generate_subs())
+        rate=args.rate,
+        volume=args.volume,
+    )
+    try:
+        media_file = None
+        if args.write_media:
+            media_file = open(args.write_media, "wb")
+
+        subs = SubMaker(args.overlapping)
+        async for data in tts.stream():
+            if data["type"] == "audio":
+                if isinstance(media_file, BufferedWriter):
+                    media_file.write(data["data"])
+                else:
+                    sys.stdout.buffer.write(data["data"])
+            elif data["type"] == "WordBoundary":
+                subs.create_sub((data["offset"], data["duration"]), data["text"])
+
+        if not args.write_subtitles:
+            sys.stderr.write(subs.generate_subs())
+        else:
+            with open(args.write_subtitles, "w", encoding="utf-8") as file:
+                file.write(subs.generate_subs())
+    finally:
+        if media_file is not None:
+            media_file.close()
 
 
-async def _main():
+async def _async_main() -> None:
     parser = argparse.ArgumentParser(description="Microsoft Edge TTS")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-t", "--text", help="what TTS will say")
@@ -64,23 +67,13 @@ async def _main():
     parser.add_argument(
         "-v",
         "--voice",
-        help="voice for TTS. "
-        "Default: Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
-        default="Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
-    )
-    parser.add_argument(
-        "-c",
-        "--codec",
-        help="codec format. Default: audio-24khz-48kbitrate-mono-mp3. "
-        "Another choice is webm-24khz-16bit-mono-opus. "
-        "For more info check https://bit.ly/2T33h6S",
-        default="audio-24khz-48kbitrate-mono-mp3",
+        help="voice for TTS. " "Default: en-US-AriaNeural",
+        default="en-US-AriaNeural",
     )
     group.add_argument(
         "-l",
         "--list-voices",
-        help="lists available voices. "
-        "Edge's list is incomplete so check https://bit.ly/2SFq1d3",
+        help="lists available voices",
         action="store_true",
     )
     parser.add_argument(
@@ -109,31 +102,18 @@ async def _main():
         type=float,
     )
     parser.add_argument(
-        "-b",
-        "--boundary-type",
-        help="set boundary type for subtitles. Default 0 for none. Set 1 for word_boundary.",
-        default=0,
-        type=int,
-    )
-    parser.add_argument(
-        "--write-media", help="instead of stdout, send media output to provided file"
+        "--write-media", help="send media output to file instead of stdout"
     )
     parser.add_argument(
         "--write-subtitles",
-        help="instead of stderr, send subtitle output to provided file (implies boundary-type is 1)",
+        help="send subtitle output to provided file instead of stderr",
     )
-    parser.add_argument(
-        "--proxy",
-        help="proxy",
-    )
+    parser.add_argument("--proxy", help="use a proxy for TTS and voice list.")
     args = parser.parse_args()
 
     if args.list_voices:
-        await _list_voices(args.proxy)
+        await _print_voices(proxy=args.proxy)
         sys.exit(0)
-
-    if args.write_subtitles and args.boundary_type == 0:
-        args.boundary_type = 1
 
     if args.text is not None or args.file is not None:
         if args.file is not None:
@@ -147,14 +127,12 @@ async def _main():
                 with open(args.file, "r", encoding="utf-8") as file:
                     args.text = file.read()
 
-        await _tts(args)
+        await _run_tts(args)
 
 
-def main():
-    """
-    Main function.
-    """
-    asyncio.get_event_loop().run_until_complete(_main())
+def main() -> None:
+    """Run the main function using asyncio."""
+    asyncio.get_event_loop().run_until_complete(_async_main())
 
 
 if __name__ == "__main__":

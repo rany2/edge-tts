@@ -1,21 +1,21 @@
 """
-list_voices package.
+list_voices package for edge_tts.
 """
 
 import json
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
 from .constants import VOICE_LIST
 
 
-async def list_voices(proxy=None):
+async def list_voices(*, proxy: Optional[str] = None) -> Any:
     """
     List all available voices and their attributes.
 
     This pulls data from the URL used by Microsoft Edge to return a list of
-    all available voices. However many more experimental voices are available
-    than are listed here. (See https://aka.ms/csspeech/voicenames)
+    all available voices.
 
     Returns:
         dict: A dictionary of voice attributes.
@@ -47,20 +47,32 @@ class VoicesManager:
     A class to find the correct voice based on their attributes.
     """
 
+    def __init__(self) -> None:
+        self.voices: List[Dict[str, Any]] = []
+        self.called_create: bool = False
+
     @classmethod
-    async def create(cls):
+    async def create(cls: Any) -> "VoicesManager":
+        """
+        Creates a VoicesManager object and populates it with all available voices.
+        """
         self = VoicesManager()
         self.voices = await list_voices()
         self.voices = [
             {**voice, **{"Language": voice["Locale"].split("-")[0]}}
             for voice in self.voices
         ]
+        self.called_create = True
         return self
 
-    def find(self, **kwargs):
+    def find(self, **kwargs: Any) -> List[Dict[str, Any]]:
         """
         Finds all matching voices based on the provided attributes.
         """
+        if not self.called_create:
+            raise RuntimeError(
+                "VoicesManager.find() called before VoicesManager.create()"
+            )
 
         matching_voices = [
             voice for voice in self.voices if kwargs.items() <= voice.items()
