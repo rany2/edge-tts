@@ -421,7 +421,7 @@ class Communicate:
             audio = open(audio_fname, "wb")
             metadata = None
             if metadata_fname is not None:
-                metadata = open(metadata_fname, "w")
+                metadata = open(metadata_fname, "w", encoding="utf-8")
 
             async for message in self.stream():
                 if message["type"] == "audio":
