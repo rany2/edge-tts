@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 """
-Streaming TTS example.
+Basic audio streaming example.
 
 This example shows how to stream the audio data from the TTS engine,
 and how to get the WordBoundary events from the engine (which could
 be ignored if not needed).
 
-The example streaming_tts_with_subtitles.py shows how to use the
+The example streaming_with_subtitles.py shows how to use the
 WordBoundary events to create subtitles using SubMaker.
 """
 

@@ -3,7 +3,7 @@
 """
 Streaming TTS example with subtitles.
 
-This example is similar to the example streaming_tts.py, but it shows
+This example is similar to the example basic_audio_streaming.py, but it shows
 WordBoundary events to create subtitles using SubMaker.
 """
 
