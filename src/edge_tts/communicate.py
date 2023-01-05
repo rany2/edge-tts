@@ -132,9 +132,7 @@ def split_text_by_byte_length(text: Union[str, bytes], byte_length: int) -> List
     return words
 
 
-def mkssml(
-    text: Union[str, bytes], voice: str, rate: str, volume: str
-) -> str:
+def mkssml(text: Union[str, bytes], voice: str, rate: str, volume: str) -> str:
     """
     Creates a SSML string from the given parameters.
 
@@ -315,9 +313,7 @@ class Communicate:
                         ssml_headers_plus_data(
                             connect_id(),
                             date,
-                            mkssml(
-                                text, self.voice, self.rate, self.volume
-                            ),
+                            mkssml(text, self.voice, self.rate, self.volume),
                         )
                     )
 
