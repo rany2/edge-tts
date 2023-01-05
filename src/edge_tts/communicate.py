@@ -240,12 +240,17 @@ class Communicate:
         Raises:
             ValueError: If the voice is not valid.
         """
+        if not isinstance(text, str):
+            raise TypeError("text must be str")
         self.text: str = text
-        self.voice: str = voice
+
         # Possible values for voice are:
         # - Microsoft Server Speech Text to Speech Voice (cy-GB, NiaNeural)
         # - cy-GB-NiaNeural
         # Always send the first variant as that is what Microsoft Edge does.
+        if not isinstance(voice, str):
+            raise TypeError("voice must be str")
+        self.voice: str = voice
         match = re.match(r"^([a-z]{2})-([A-Z]{2})-(.+Neural)$", voice)
         if match is not None:
             self.voice = (
@@ -262,14 +267,20 @@ class Communicate:
         ):
             raise ValueError(f"Invalid voice '{voice}'.")
 
-        if re.match(r"^[+-]?\d+%$", rate) is None:
+        if not isinstance(rate, str):
+            raise TypeError("rate must be str")
+        if re.match(r"^[+-]\d+%$", rate) is None:
             raise ValueError(f"Invalid rate '{rate}'.")
         self.rate: str = rate
 
-        if re.match(r"^[+-]?\d+%$", volume) is None:
+        if not isinstance(volume, str):
+            raise TypeError("volume must be str")
+        if re.match(r"^[+-]\d+%$", volume) is None:
             raise ValueError(f"Invalid volume '{volume}'.")
         self.volume: str = volume
 
+        if proxy is not None and not isinstance(proxy, str):
+            raise TypeError("proxy must be str")
         self.proxy: Optional[str] = proxy
 
     async def stream(self) -> AsyncGenerator[Dict[str, Any], None]:
