@@ -19,10 +19,17 @@ async def _print_voices(*, proxy: str) -> None:
             print()
 
         for key in voice.keys():
-            if key in ["SuggestedCodec", "FriendlyName", "Status"]:
+            if key in (
+                "SuggestedCodec",
+                "FriendlyName",
+                "Status",
+                "VoiceTag",
+                "Name",
+                "Locale",
+            ):
                 continue
-            # print ("%s: %s" % ("Name" if key == "ShortName" else key, voice[key]))
-            print(f"{key}: {voice[key]}")
+            pretty_key_name = key if key != "ShortName" else "Name"
+            print(f"{pretty_key_name}: {voice[key]}")
 
 
 async def _run_tts(args: Any) -> None:
