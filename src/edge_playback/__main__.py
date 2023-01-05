@@ -4,14 +4,13 @@
 Playback TTS with subtitles using edge-tts and mpv.
 """
 
-import os
 import subprocess
 import sys
 import tempfile
 from shutil import which
 
 
-def main() -> None:
+def _main() -> None:
     depcheck_failed = False
     if not which("mpv"):
         print("mpv is not installed.", file=sys.stderr)
@@ -23,13 +22,10 @@ def main() -> None:
         print("Please install the missing dependencies.", file=sys.stderr)
         sys.exit(1)
 
-    media = None
-    subtitle = None
-    try:
-        media = tempfile.NamedTemporaryFile(delete=False)
+    with tempfile.NamedTemporaryFile(
+        suffix=".mp3", delete=False
+    ) as media, tempfile.NamedTemporaryFile(suffix=".vtt", delete=False) as subtitle:
         media.close()
-
-        subtitle = tempfile.NamedTemporaryFile(delete=False)
         subtitle.close()
 
         print(f"Media file: {media.name}")
@@ -52,12 +48,7 @@ def main() -> None:
             ]
         ) as process:
             process.communicate()
-    finally:
-        if media is not None:
-            os.unlink(media.name)
-        if subtitle is not None:
-            os.unlink(subtitle.name)
 
 
 if __name__ == "__main__":
-    main()
+    _main()

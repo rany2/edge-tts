@@ -15,12 +15,12 @@ import asyncio
 
 import edge_tts
 
+TEXT = "Hello World!"
+VOICE = "en-GB-SoniaNeural"
+OUTPUT_FILE = "test.mp3"
 
-async def main() -> None:
-    TEXT = "Hello World!"
-    VOICE = "en-GB-SoniaNeural"
-    OUTPUT_FILE = "test.mp3"
 
+async def _main() -> None:
     communicate = edge_tts.Communicate(TEXT, VOICE)
     with open(OUTPUT_FILE, "wb") as file:
         async for chunk in communicate.stream():
@@ -31,4 +31,4 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.get_event_loop().run_until_complete(_main())

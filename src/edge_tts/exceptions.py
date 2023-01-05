@@ -14,3 +14,7 @@ class UnexpectedResponse(Exception):
 
 class NoAudioReceived(Exception):
     """Raised when no audio is received from the server."""
+
+
+class WebSocketError(Exception):
+    """Raised when a WebSocket error occurs."""

@@ -4,6 +4,6 @@
 Init file for the package.
 """
 
-from .__main__ import main
+from .__main__ import _main
 
-__all__ = ["main"]
+__all__ = ["_main"]
