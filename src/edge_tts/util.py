@@ -74,27 +74,17 @@ async def _async_main() -> None:
     parser.add_argument(
         "-v",
         "--voice",
-        help="voice for TTS. " "Default: en-US-AriaNeural",
+        help="voice for TTS. Default: en-US-AriaNeural",
         default="en-US-AriaNeural",
     )
     group.add_argument(
         "-l",
         "--list-voices",
-        help="lists available voices",
+        help="lists available voices and exits",
         action="store_true",
     )
-    parser.add_argument(
-        "-r",
-        "--rate",
-        help="set TTS rate. Default +0%%. For more info check https://bit.ly/3eAE5Nx",
-        default="+0%",
-    )
-    parser.add_argument(
-        "-V",
-        "--volume",
-        help="set TTS volume. Default +0%%. For more info check https://bit.ly/3eAE5Nx",
-        default="+0%",
-    )
+    parser.add_argument("--rate", help="set TTS rate. Default +0%%.", default="+0%")
+    parser.add_argument("--volume", help="set TTS volume. Default +0%%.", default="+0%")
     parser.add_argument(
         "-O",
         "--overlapping",
@@ -116,18 +106,16 @@ async def _async_main() -> None:
         await _print_voices(proxy=args.proxy)
         sys.exit(0)
 
-    if args.text is not None or args.file is not None:
-        if args.file is not None:
-            # we need to use sys.stdin.read() because some devices
-            # like Windows and Termux don't have a /dev/stdin.
-            if args.file == "/dev/stdin":
-                # logger.debug("stdin detected, reading natively from stdin")
-                args.text = sys.stdin.read()
-            else:
-                # logger.debug("reading from %s" % args.file)
-                with open(args.file, "r", encoding="utf-8") as file:
-                    args.text = file.read()
+    if args.file is not None:
+        # we need to use sys.stdin.read() because some devices
+        # like Windows and Termux don't have a /dev/stdin.
+        if args.file == "/dev/stdin":
+            args.text = sys.stdin.read()
+        else:
+            with open(args.file, "r", encoding="utf-8") as file:
+                args.text = file.read()
 
+    if args.text is not None:
         await _run_tts(args)
 
 

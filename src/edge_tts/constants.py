@@ -1,5 +1,5 @@
 """
-Constants for the edgeTTS package.
+Constants for the Edge TTS project.
 """
 
 TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
