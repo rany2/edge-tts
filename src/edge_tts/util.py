@@ -6,8 +6,8 @@ Main package.
 import argparse
 import asyncio
 import sys
-from io import BufferedWriter
-from typing import Any
+from io import TextIOWrapper
+from typing import Any, TextIO, Union
 
 from edge_tts import Communicate, SubMaker, list_voices
 
@@ -34,36 +34,30 @@ async def _print_voices(*, proxy: str) -> None:
 
 async def _run_tts(args: Any) -> None:
     """Run TTS after parsing arguments from command line."""
-    tts = Communicate(
+    tts: Communicate = Communicate(
         args.text,
         args.voice,
         proxy=args.proxy,
         rate=args.rate,
         volume=args.volume,
     )
-    try:
-        media_file = None
-        if args.write_media:
-            media_file = open(args.write_media, "wb")
+    subs: SubMaker = SubMaker(args.overlapping)
+    with open(
+        args.write_media, "wb"
+    ) if args.write_media else sys.stdout.buffer as audio_file:
+        async for chunk in tts.stream():
+            if chunk["type"] == "audio":
+                audio_file.write(chunk["data"])
+            elif chunk["type"] == "WordBoundary":
+                subs.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
 
-        subs = SubMaker(args.overlapping)
-        async for data in tts.stream():
-            if data["type"] == "audio":
-                if isinstance(media_file, BufferedWriter):
-                    media_file.write(data["data"])
-                else:
-                    sys.stdout.buffer.write(data["data"])
-            elif data["type"] == "WordBoundary":
-                subs.create_sub((data["offset"], data["duration"]), data["text"])
-
-        if not args.write_subtitles:
-            sys.stderr.write(subs.generate_subs())
-        else:
-            with open(args.write_subtitles, "w", encoding="utf-8") as file:
-                file.write(subs.generate_subs())
-    finally:
-        if media_file is not None:
-            media_file.close()
+    sub_file: Union[TextIOWrapper, TextIO] = (
+        open(args.write_subtitles, "w", encoding="utf-8")
+        if args.write_subtitles
+        else sys.stderr
+    )
+    with sub_file:
+        sub_file.write(subs.generate_subs())
 
 
 async def _async_main() -> None:

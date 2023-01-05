@@ -19,6 +19,8 @@ jobs:
       run: pip install .[dev]
     - name: Run mypy
       run: mypy --pretty src examples
+    - name: Run pylint
+      run: pylint examples src
     - name: Run isort
       run: isort --check-only --diff .
     - name: Run black

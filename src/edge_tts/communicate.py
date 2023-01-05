@@ -7,12 +7,29 @@ import json
 import re
 import time
 import uuid
-from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple, Union
+from contextlib import nullcontext
+from io import TextIOWrapper
+from typing import (
+    Any,
+    AsyncGenerator,
+    ContextManager,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 from xml.sax.saxutils import escape
 
 import aiohttp
 
-from edge_tts.exceptions import NoAudioReceived, UnexpectedResponse, UnknownResponse
+from edge_tts.exceptions import (
+    NoAudioReceived,
+    UnexpectedResponse,
+    UnknownResponse,
+    WebSocketError,
+)
 
 from .constants import WSS_URL
 
@@ -161,8 +178,6 @@ def date_to_string() -> str:
     # without having to use a library. We'll just use UTC and hope for the best.
     # For example, right now %Z would return EEST when we need it to return
     # Eastern European Summer Time.
-    #
-    # return time.strftime("%a %b %d %Y %H:%M:%S GMT%z (%Z)")
     return time.strftime(
         "%a %b %d %Y %H:%M:%S GMT+0000 (Coordinated Universal Time)", time.gmtime()
     )
@@ -183,6 +198,26 @@ def ssml_headers_plus_data(request_id: str, timestamp: str, ssml: str) -> str:
         "Path:ssml\r\n\r\n"
         f"{ssml}"
     )
+
+
+def calc_max_mesg_size(voice: str, rate: str, volume: str) -> int:
+    """Calculates the maximum message size for the given voice, rate, and volume.
+
+    Returns:
+        int: The maximum message size.
+    """
+    websocket_max_size: int = 2**16
+    overhead_per_message: int = (
+        len(
+            ssml_headers_plus_data(
+                connect_id(),
+                date_to_string(),
+                mkssml("", voice, rate, volume),
+            )
+        )
+        + 50  # margin of error
+    )
+    return websocket_max_size - overhead_per_message
 
 
 class Communicate:
@@ -206,7 +241,6 @@ class Communicate:
             ValueError: If the voice is not valid.
         """
         self.text: str = text
-        self.codec: str = "audio-24khz-48kbitrate-mono-mp3"
         self.voice: str = voice
         # Possible values for voice are:
         # - Microsoft Server Speech Text to Speech Voice (cy-GB, NiaNeural)
@@ -241,157 +275,122 @@ class Communicate:
     async def stream(self) -> AsyncGenerator[Dict[str, Any], None]:
         """Streams audio and metadata from the service."""
 
-        websocket_max_size = 2**16
-        overhead_per_message = (
-            len(
-                ssml_headers_plus_data(
-                    connect_id(),
-                    date_to_string(),
-                    mkssml("", self.voice, self.rate, self.volume),
-                )
-            )
-            + 50  # margin of error
-        )
         texts = split_text_by_byte_length(
             escape(remove_incompatible_characters(self.text)),
-            websocket_max_size - overhead_per_message,
+            calc_max_mesg_size(self.voice, self.rate, self.volume),
         )
 
-        async with aiohttp.ClientSession(trust_env=True) as session:
-            async with session.ws_connect(
-                f"{WSS_URL}&ConnectionId={connect_id()}",
-                compress=15,
-                autoclose=True,
-                autoping=True,
-                proxy=self.proxy,
-                headers={
-                    "Pragma": "no-cache",
-                    "Cache-Control": "no-cache",
-                    "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
-                    "Accept-Encoding": "gzip, deflate, br",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                    " (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
-                },
-            ) as websocket:
-                for text in texts:
-                    # download indicates whether we should be expecting audio data,
-                    # this is so what we avoid getting binary data from the websocket
-                    # and falsely thinking it's audio data.
-                    download_audio = False
+        async with aiohttp.ClientSession(trust_env=True) as session, session.ws_connect(
+            f"{WSS_URL}&ConnectionId={connect_id()}",
+            compress=15,
+            autoclose=True,
+            autoping=True,
+            proxy=self.proxy,
+            headers={
+                "Pragma": "no-cache",
+                "Cache-Control": "no-cache",
+                "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Language": "en-US,en;q=0.9",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                " (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
+            },
+        ) as websocket:
+            for text in texts:
+                # download indicates whether we should be expecting audio data,
+                # this is so what we avoid getting binary data from the websocket
+                # and falsely thinking it's audio data.
+                download_audio = False
 
-                    # audio_was_received indicates whether we have received audio data
-                    # from the websocket. This is so we can raise an exception if we
-                    # don't receive any audio data.
-                    audio_was_received = False
+                # audio_was_received indicates whether we have received audio data
+                # from the websocket. This is so we can raise an exception if we
+                # don't receive any audio data.
+                audio_was_received = False
 
-                    # Each message needs to have the proper date
-                    date = date_to_string()
+                # Each message needs to have the proper date.
+                date = date_to_string()
 
-                    # Prepare the request to be sent to the service.
-                    #
-                    # Note sentenceBoundaryEnabled and wordBoundaryEnabled are actually supposed
-                    # to be booleans, but Edge Browser seems to send them as strings.
-                    #
-                    # This is a bug in Edge as Azure Cognitive Services actually sends them as
-                    # bool and not string. For now I will send them as bool unless it causes
-                    # any problems.
-                    #
-                    # Also pay close attention to double { } in request (escape for f-string).
-                    request = (
-                        f"X-Timestamp:{date}\r\n"
-                        "Content-Type:application/json; charset=utf-8\r\n"
-                        "Path:speech.config\r\n\r\n"
-                        '{"context":{"synthesis":{"audio":{"metadataoptions":{'
-                        '"sentenceBoundaryEnabled":false,"wordBoundaryEnabled":true},'
-                        f'"outputFormat":"{self.codec}"'
-                        "}}}}\r\n"
+                # Prepare the request to be sent to the service.
+                #
+                # Note sentenceBoundaryEnabled and wordBoundaryEnabled are actually supposed
+                # to be booleans, but Edge Browser seems to send them as strings.
+                #
+                # This is a bug in Edge as Azure Cognitive Services actually sends them as
+                # bool and not string. For now I will send them as bool unless it causes
+                # any problems.
+                #
+                # Also pay close attention to double { } in request (escape for f-string).
+                await websocket.send_str(
+                    f"X-Timestamp:{date}\r\n"
+                    "Content-Type:application/json; charset=utf-8\r\n"
+                    "Path:speech.config\r\n\r\n"
+                    '{"context":{"synthesis":{"audio":{"metadataoptions":{'
+                    '"sentenceBoundaryEnabled":false,"wordBoundaryEnabled":true},'
+                    '"outputFormat":"audio-24khz-48kbitrate-mono-mp3"'
+                    "}}}}\r\n"
+                )
+
+                await websocket.send_str(
+                    ssml_headers_plus_data(
+                        connect_id(),
+                        date,
+                        mkssml(text, self.voice, self.rate, self.volume),
                     )
-                    await websocket.send_str(request)
+                )
 
-                    await websocket.send_str(
-                        ssml_headers_plus_data(
-                            connect_id(),
-                            date,
-                            mkssml(text, self.voice, self.rate, self.volume),
-                        )
+                async for received in websocket:
+                    if received.type == aiohttp.WSMsgType.TEXT:
+                        parameters, data = get_headers_and_data(received.data)
+                        if parameters.get("Path") == "turn.start":
+                            download_audio = True
+                        elif parameters.get("Path") == "turn.end":
+                            download_audio = False
+                            break  # End of audio data
+                        elif parameters.get("Path") == "audio.metadata":
+                            meta = json.loads(data)
+                            for i in range(len(meta["Metadata"])):
+                                meta_obj = meta["Metadata"][i]
+                                meta_type = meta_obj["Type"]
+                                if meta_type == "WordBoundary":
+                                    yield {
+                                        "type": meta_type,
+                                        "offset": meta_obj["Data"]["Offset"],
+                                        "duration": meta_obj["Data"]["Duration"],
+                                        "text": meta_obj["Data"]["text"]["Text"],
+                                    }
+                                elif meta_type == "SessionEnd":
+                                    continue
+                                else:
+                                    raise UnknownResponse(
+                                        f"Unknown metadata type: {meta_type}"
+                                    )
+                        elif parameters.get("Path") == "response":
+                            pass
+                        else:
+                            raise UnknownResponse(
+                                "The response from the service is not recognized.\n"
+                                + received.data
+                            )
+                    elif received.type == aiohttp.WSMsgType.BINARY:
+                        if not download_audio:
+                            raise UnexpectedResponse(
+                                "We received a binary message, but we are not expecting one."
+                            )
+
+                        yield {
+                            "type": "audio",
+                            "data": b"Path:audio\r\n".join(
+                                received.data.split(b"Path:audio\r\n")[1:]
+                            ),
+                        }
+                        audio_was_received = True
+                    elif received.type == aiohttp.WSMsgType.ERROR:
+                        raise WebSocketError(received.data)
+
+                if not audio_was_received:
+                    raise NoAudioReceived(
+                        "No audio was received. Please verify that your parameters are correct."
                     )
-
-                    async for received in websocket:
-                        if received.type == aiohttp.WSMsgType.TEXT:
-                            parameters, data = get_headers_and_data(received.data)
-                            if (
-                                "Path" in parameters
-                                and parameters["Path"] == "turn.start"
-                            ):
-                                download_audio = True
-                            elif (
-                                "Path" in parameters
-                                and parameters["Path"] == "turn.end"
-                            ):
-                                download_audio = False
-                                break
-                            elif (
-                                "Path" in parameters
-                                and parameters["Path"] == "audio.metadata"
-                            ):
-                                metadata = json.loads(data)
-                                for i in range(len(metadata["Metadata"])):
-                                    metadata_type = metadata["Metadata"][i]["Type"]
-                                    metadata_offset = metadata["Metadata"][i]["Data"][
-                                        "Offset"
-                                    ]
-                                    if metadata_type == "WordBoundary":
-                                        metadata_duration = metadata["Metadata"][i][
-                                            "Data"
-                                        ]["Duration"]
-                                        metadata_text = metadata["Metadata"][i]["Data"][
-                                            "text"
-                                        ]["Text"]
-                                        yield {
-                                            "type": metadata_type,
-                                            "offset": metadata_offset,
-                                            "duration": metadata_duration,
-                                            "text": metadata_text,
-                                        }
-                                    elif metadata_type == "SentenceBoundary":
-                                        raise UnknownResponse(
-                                            "SentenceBoundary is not supported due to being broken."
-                                        )
-                                    elif metadata_type == "SessionEnd":
-                                        continue
-                                    else:
-                                        raise UnknownResponse(
-                                            f"Unknown metadata type: {metadata_type}"
-                                        )
-                            elif (
-                                "Path" in parameters
-                                and parameters["Path"] == "response"
-                            ):
-                                pass
-                            else:
-                                raise UnknownResponse(
-                                    "The response from the service is not recognized.\n"
-                                    + received.data
-                                )
-                        elif received.type == aiohttp.WSMsgType.BINARY:
-                            if download_audio:
-                                yield {
-                                    "type": "audio",
-                                    "data": b"Path:audio\r\n".join(
-                                        received.data.split(b"Path:audio\r\n")[1:]
-                                    ),
-                                }
-                                audio_was_received = True
-                            else:
-                                raise UnexpectedResponse(
-                                    "We received a binary message, but we are not expecting one."
-                                )
-
-                    if not audio_was_received:
-                        raise NoAudioReceived(
-                            "No audio was received. Please verify that your parameters are correct."
-                        )
 
     async def save(
         self,
@@ -401,24 +400,23 @@ class Communicate:
         """
         Save the audio and metadata to the specified files.
         """
-        written_audio = False
-        try:
-            audio = open(audio_fname, "wb")
-            metadata = None
-            if metadata_fname is not None:
-                metadata = open(metadata_fname, "w", encoding="utf-8")
-
+        written_audio: bool = False
+        metadata: Union[TextIOWrapper, ContextManager[None]] = (
+            open(metadata_fname, "w", encoding="utf-8")
+            if metadata_fname is not None
+            else nullcontext()
+        )
+        with metadata, open(audio_fname, "wb") as audio:
             async for message in self.stream():
                 if message["type"] == "audio":
                     audio.write(message["data"])
                     written_audio = True
-                elif metadata is not None and message["type"] == "WordBoundary":
+                elif (
+                    isinstance(metadata, TextIOWrapper)
+                    and message["type"] == "WordBoundary"
+                ):
                     json.dump(message, metadata)
                     metadata.write("\n")
-        finally:
-            audio.close()
-            if metadata is not None:
-                metadata.close()
 
         if not written_audio:
             raise NoAudioReceived(
