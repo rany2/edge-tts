@@ -231,15 +231,15 @@ class Communicate:
         ):
             raise ValueError(f"Invalid voice '{voice}'.")
 
-        if re.match(r"^[+-]\d+Hz$", pitch) is None:
+        if re.match(r"^[+-]?\d+Hz$", pitch) is None:
             raise ValueError(f"Invalid pitch '{pitch}'.")
         self.pitch: str = pitch
 
-        if re.match(r"^[+-]0*([0-9]|([1-9][0-9])|100)%$", rate) is None:
+        if re.match(r"^[+-]?\d+%$", rate) is None:
             raise ValueError(f"Invalid rate '{rate}'.")
         self.rate: str = rate
 
-        if re.match(r"^[+-]0*([0-9]|([1-9][0-9])|100)%$", volume) is None:
+        if re.match(r"^[+-]?\d+%$", volume) is None:
             raise ValueError(f"Invalid volume '{volume}'.")
         self.volume: str = volume
 
