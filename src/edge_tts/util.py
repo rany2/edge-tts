@@ -84,12 +84,6 @@ async def _async_main() -> None:
         action="store_true",
     )
     parser.add_argument(
-        "-p",
-        "--pitch",
-        help="set TTS pitch. Default +0Hz, For more info check https://bit.ly/3eAE5Nx",
-        default="+0Hz",
-    )
-    parser.add_argument(
         "-r",
         "--rate",
         help="set TTS rate. Default +0%%. For more info check https://bit.ly/3eAE5Nx",

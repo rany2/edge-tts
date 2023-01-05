@@ -63,17 +63,18 @@ You must first check the available voices with the `--list-voices` option:
 
 Support for custom SSML has been removed since 5.0.0 because Microsoft has taken the initiative to prevent it from working. You cannot use custom SSML anymore.
 
-### Changing pitch, rate, volume, etc.
+### Changing rate, volume, etc.
 
 It is possible to make minor changes to the generated speech.
 
-    $ edge-tts --pitch=-10Hz --text "Hello, world!" --write-media hello_with_pitch_down.mp3
     $ edge-tts --rate=-50% --text "Hello, world!" --write-media hello_with_rate_halved.mp3
     $ edge-tts --volume=-50% --text "Hello, world!" --write-media hello_with_volume_halved.mp3
 
-Keep in mind that the `--pitch`, `--rate`, `--volume`, etc. options are applied to the entire SSML document.
+Keep in mind that the `--rate`, `--volume`, etc. options are applied to the entire SSML document.
 
-In addition, it is required to use `--pitch=-10Hz` instead of `--pitch -10Hz` otherwise the `-10Hz` would be interpreted as just another argument.
+In addition, it is required to use `--rate=-50%` instead of `--pitch -50%` otherwise the `-50%` would be interpreted as just another argument.
+
+**NOTE**: `--pitch` was removed in 6.0.3 as it no longer appears to have any effect.
 
 ### Note on the `edge-playback` command
 

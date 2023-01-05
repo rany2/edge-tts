@@ -133,7 +133,7 @@ def split_text_by_byte_length(text: Union[str, bytes], byte_length: int) -> List
 
 
 def mkssml(
-    text: Union[str, bytes], voice: str, pitch: str, rate: str, volume: str
+    text: Union[str, bytes], voice: str, rate: str, volume: str
 ) -> str:
     """
     Creates a SSML string from the given parameters.
@@ -146,7 +146,7 @@ def mkssml(
 
     ssml = (
         "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>"
-        f"<voice name='{voice}'><prosody pitch='{pitch}' rate='{rate}' volume='{volume}'>"
+        f"<voice name='{voice}'><prosody pitch='+0Hz' rate='{rate}' volume='{volume}'>"
         f"{text}</prosody></voice></speak>"
     )
     return ssml
@@ -197,7 +197,6 @@ class Communicate:
         text: str,
         voice: str = "Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
         *,
-        pitch: str = "+0Hz",
         rate: str = "+0%",
         volume: str = "+0%",
         proxy: Optional[str] = None,
@@ -231,10 +230,6 @@ class Communicate:
         ):
             raise ValueError(f"Invalid voice '{voice}'.")
 
-        if re.match(r"^[+-]?\d+Hz$", pitch) is None:
-            raise ValueError(f"Invalid pitch '{pitch}'.")
-        self.pitch: str = pitch
-
         if re.match(r"^[+-]?\d+%$", rate) is None:
             raise ValueError(f"Invalid rate '{rate}'.")
         self.rate: str = rate
@@ -254,7 +249,7 @@ class Communicate:
                 ssml_headers_plus_data(
                     connect_id(),
                     date_to_string(),
-                    mkssml("", self.voice, self.pitch, self.rate, self.volume),
+                    mkssml("", self.voice, self.rate, self.volume),
                 )
             )
             + 50  # margin of error
@@ -321,7 +316,7 @@ class Communicate:
                             connect_id(),
                             date,
                             mkssml(
-                                text, self.voice, self.pitch, self.rate, self.volume
+                                text, self.voice, self.rate, self.volume
                             ),
                         )
                     )
