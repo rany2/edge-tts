@@ -7,7 +7,7 @@ import json
 import re
 import time
 import uuid
-from typing import Any, AsyncGenerator, Dict, Generator, List, Optional
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Tuple, Union
 from xml.sax.saxutils import escape
 
 import aiohttp
@@ -17,7 +17,7 @@ from edge_tts.exceptions import NoAudioReceived, UnexpectedResponse, UnknownResp
 from .constants import WSS_URL
 
 
-def get_headers_and_data(data: str | bytes) -> tuple[Dict[str, str], bytes]:
+def get_headers_and_data(data: Union[str, bytes]) -> Tuple[Dict[str, str], bytes]:
     """
     Returns the headers and data from the given data.
 
@@ -43,7 +43,7 @@ def get_headers_and_data(data: str | bytes) -> tuple[Dict[str, str], bytes]:
     return headers, b"\r\n\r\n".join(data.split(b"\r\n\r\n")[1:])
 
 
-def remove_incompatible_characters(string: str | bytes) -> str:
+def remove_incompatible_characters(string: Union[str, bytes]) -> str:
     """
     The service does not support a couple character ranges.
     Most important being the vertical tab character which is
@@ -95,7 +95,7 @@ def iter_bytes(my_bytes: bytes) -> Generator[bytes, None, None]:
         yield my_bytes[i : i + 1]
 
 
-def split_text_by_byte_length(text: str | bytes, byte_length: int) -> List[bytes]:
+def split_text_by_byte_length(text: Union[str, bytes], byte_length: int) -> List[bytes]:
     """
     Splits a string into a list of strings of a given byte length
     while attempting to keep words together.
@@ -132,7 +132,9 @@ def split_text_by_byte_length(text: str | bytes, byte_length: int) -> List[bytes
     return words
 
 
-def mkssml(text: str | bytes, voice: str, pitch: str, rate: str, volume: str) -> str:
+def mkssml(
+    text: Union[str, bytes], voice: str, pitch: str, rate: str, volume: str
+) -> str:
     """
     Creates a SSML string from the given parameters.
 
@@ -401,7 +403,9 @@ class Communicate:
                         )
 
     async def save(
-        self, audio_fname: str | bytes, metadata_fname: Optional[str | bytes] = None
+        self,
+        audio_fname: Union[str, bytes],
+        metadata_fname: Optional[Union[str, bytes]] = None,
     ) -> None:
         """
         Save the audio and metadata to the specified files.
