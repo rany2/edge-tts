@@ -4,6 +4,7 @@
 Playback TTS with subtitles using edge-tts and mpv.
 """
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -22,9 +23,10 @@ def _main() -> None:
         print("Please install the missing dependencies.", file=sys.stderr)
         sys.exit(1)
 
+    keep = os.environ.get("EDGE_PLAYBACK_KEEP_TEMP") is not None
     with tempfile.NamedTemporaryFile(
-        suffix=".mp3", delete=False
-    ) as media, tempfile.NamedTemporaryFile(suffix=".vtt", delete=False) as subtitle:
+        suffix=".mp3", delete=not keep
+    ) as media, tempfile.NamedTemporaryFile(suffix=".vtt", delete=not keep) as subtitle:
         media.close()
         subtitle.close()
 
@@ -48,6 +50,9 @@ def _main() -> None:
             ]
         ) as process:
             process.communicate()
+
+    if keep:
+        print(f"\nKeeping temporary files: {media.name} and {subtitle.name}")
 
 
 if __name__ == "__main__":
