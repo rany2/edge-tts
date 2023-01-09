@@ -52,12 +52,14 @@ class VoicesManager:
         self.called_create: bool = False
 
     @classmethod
-    async def create(cls: Any) -> "VoicesManager":
+    async def create(
+        cls: Any, custom_voices: Optional[List[Dict[str, Any]]] = None
+    ) -> Any:
         """
         Creates a VoicesManager object and populates it with all available voices.
         """
         self = VoicesManager()
-        self.voices = await list_voices()
+        self.voices = await list_voices() if custom_voices is None else custom_voices
         self.voices = [
             {**voice, **{"Language": voice["Locale"].split("-")[0]}}
             for voice in self.voices

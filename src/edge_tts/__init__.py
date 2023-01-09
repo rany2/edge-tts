@@ -14,4 +14,4 @@ __all__ = [
     "exceptions",
     "list_voices",
 ]
-__version__ = "6.0.7"
+__version__ = "6.1"
