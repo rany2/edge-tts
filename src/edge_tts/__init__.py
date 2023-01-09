@@ -6,6 +6,7 @@ from . import exceptions
 from .communicate import Communicate
 from .list_voices import VoicesManager, list_voices
 from .submaker import SubMaker
+from .version import __version__
 
 __all__ = [
     "Communicate",
@@ -14,4 +15,3 @@ __all__ = [
     "exceptions",
     "list_voices",
 ]
-__version__ = "6.1"
