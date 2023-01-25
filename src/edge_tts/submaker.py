@@ -40,7 +40,7 @@ class SubMaker:
     SubMaker class
     """
 
-    def __init__(self, overlapping: int = 1) -> None:
+    def __init__(self, overlapping: int = 0) -> None:
         """
         SubMaker constructor.
 

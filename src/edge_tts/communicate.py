@@ -254,9 +254,15 @@ class Communicate:
         self.voice: str = voice
         match = re.match(r"^([a-z]{2})-([A-Z]{2})-(.+Neural)$", voice)
         if match is not None:
+            lang = match.group(1)
+            region = match.group(2)
+            name = match.group(3)
+            if name.find("-") != -1:
+                region = region + "-" + name[: name.find("-")]
+                name = name[name.find("-") + 1 :]
             self.voice = (
                 "Microsoft Server Speech Text to Speech Voice"
-                + f" ({match.group(1)}-{match.group(2)}, {match.group(3)})"
+                + f" ({lang}-{region}, {name})"
             )
 
         if (
@@ -291,24 +297,29 @@ class Communicate:
             escape(remove_incompatible_characters(self.text)),
             calc_max_mesg_size(self.voice, self.rate, self.volume),
         )
+        final_utterance: Dict[int, int] = {}
+        prev_idx = -1
+        shift_time = -1
 
-        async with aiohttp.ClientSession(trust_env=True) as session, session.ws_connect(
-            f"{WSS_URL}&ConnectionId={connect_id()}",
-            compress=15,
-            autoclose=True,
-            autoping=True,
-            proxy=self.proxy,
-            headers={
-                "Pragma": "no-cache",
-                "Cache-Control": "no-cache",
-                "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "en-US,en;q=0.9",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                " (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
-            },
-        ) as websocket:
-            for text in texts:
+        for idx, text in enumerate(texts):
+            async with aiohttp.ClientSession(
+                trust_env=True
+            ) as session, session.ws_connect(
+                f"{WSS_URL}&ConnectionId={connect_id()}",
+                compress=15,
+                autoclose=True,
+                autoping=True,
+                proxy=self.proxy,
+                headers={
+                    "Pragma": "no-cache",
+                    "Cache-Control": "no-cache",
+                    "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    " (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
+                },
+            ) as websocket:
                 # download indicates whether we should be expecting audio data,
                 # this is so what we avoid getting binary data from the websocket
                 # and falsely thinking it's audio data.
@@ -362,10 +373,25 @@ class Communicate:
                         elif path == b"audio.metadata":
                             for meta_obj in json.loads(data)["Metadata"]:
                                 meta_type = meta_obj["Type"]
+                                if idx != prev_idx:
+                                    shift_time = sum(
+                                        final_utterance[i] for i in range(idx)
+                                    )
+                                    prev_idx = idx
                                 if meta_type == "WordBoundary":
+                                    final_utterance[idx] = (
+                                        meta_obj["Data"]["Offset"]
+                                        + meta_obj["Data"]["Duration"]
+                                        # Average padding added by the service
+                                        # Alternatively we could use ffmpeg to get value properly
+                                        # but I don't want to add an additional dependency
+                                        # if this is found to work well enough.
+                                        + 8_750_000
+                                    )
                                     yield {
                                         "type": meta_type,
-                                        "offset": meta_obj["Data"]["Offset"],
+                                        "offset": meta_obj["Data"]["Offset"]
+                                        + shift_time,
                                         "duration": meta_obj["Data"]["Duration"],
                                         "text": meta_obj["Data"]["text"]["Text"],
                                     }

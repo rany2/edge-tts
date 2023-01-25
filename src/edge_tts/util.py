@@ -14,7 +14,9 @@ from edge_tts import Communicate, SubMaker, list_voices
 
 async def _print_voices(*, proxy: str) -> None:
     """Print all available voices."""
-    for idx, voice in enumerate(await list_voices(proxy=proxy)):
+    voices = await list_voices(proxy=proxy)
+    voices = sorted(voices, key=lambda voice: voice["ShortName"])  # type: ignore
+    for idx, voice in enumerate(voices):
         if idx != 0:
             print()
 
@@ -82,8 +84,8 @@ async def _async_main() -> None:
     parser.add_argument(
         "-O",
         "--overlapping",
-        help="overlapping subtitles in seconds",
-        default=1,
+        help="overlapping subtitles in seconds. Default: 0.",
+        default=0,
         type=float,
     )
     parser.add_argument(
