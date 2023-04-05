@@ -43,7 +43,7 @@ async def _run_tts(args: Any) -> None:
         rate=args.rate,
         volume=args.volume,
     )
-    subs: SubMaker = SubMaker(args.overlapping)
+    subs: SubMaker = SubMaker()
     with open(
         args.write_media, "wb"
     ) if args.write_media else sys.stdout.buffer as audio_file:
@@ -59,7 +59,7 @@ async def _run_tts(args: Any) -> None:
         else sys.stderr
     )
     with sub_file:
-        sub_file.write(subs.generate_subs())
+        sub_file.write(subs.generate_subs(args.words_in_cue))
 
 
 async def _async_main() -> None:
@@ -82,10 +82,9 @@ async def _async_main() -> None:
     parser.add_argument("--rate", help="set TTS rate. Default +0%%.", default="+0%")
     parser.add_argument("--volume", help="set TTS volume. Default +0%%.", default="+0%")
     parser.add_argument(
-        "-O",
-        "--overlapping",
-        help="overlapping subtitles in seconds. Default: 0.",
-        default=0,
+        "--words-in-cue",
+        help="number of words in a subtitle cue. Default: 10.",
+        default=10,
         type=float,
     )
     parser.add_argument(

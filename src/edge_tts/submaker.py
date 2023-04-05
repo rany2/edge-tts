@@ -10,12 +10,12 @@ from typing import List, Tuple
 from xml.sax.saxutils import escape, unescape
 
 
-def formatter(offset1: float, offset2: float, subdata: str) -> str:
+def formatter(start_time: float, end_time: float, subdata: str) -> str:
     """
     formatter returns the timecode and the text of the subtitle.
     """
     return (
-        f"{mktimestamp(offset1)} --> {mktimestamp(offset2)}\r\n"
+        f"{mktimestamp(start_time)} --> {mktimestamp(end_time)}\r\n"
         f"{escape(subdata)}\r\n\r\n"
     )
 
@@ -40,17 +40,12 @@ class SubMaker:
     SubMaker class
     """
 
-    def __init__(self, overlapping: int = 0) -> None:
+    def __init__(self) -> None:
         """
         SubMaker constructor.
-
-        Args:
-            overlapping (int): The amount of time in seconds that the
-                               subtitles should overlap.
         """
         self.offset: List[Tuple[float, float]] = []
         self.subs: List[str] = []
-        self.overlapping: int = overlapping * (10**7)
 
     def create_sub(self, timestamp: Tuple[float, float], text: str) -> None:
         """
@@ -67,21 +62,44 @@ class SubMaker:
         self.offset.append((timestamp[0], timestamp[0] + timestamp[1]))
         self.subs.append(text)
 
-    def generate_subs(self) -> str:
+    def generate_subs(self, words_in_cue: int = 10) -> str:
         """
         generate_subs generates the complete subtitle file.
+
+        Args:
+            words_in_cue (int): defines the number of words in a given cue
 
         Returns:
             str: The complete subtitle file.
         """
-        if len(self.subs) == len(self.offset):
-            data = "WEBVTT\r\n\r\n"
-            for offset, subs in zip(self.offset, self.subs):
-                subs = unescape(subs)
+        if len(self.subs) != len(self.offset):
+            raise ValueError("subs and offset are not of the same length")
+
+        if words_in_cue <= 0:
+            raise ValueError("words_in_cue must be greater than 0")
+
+        data = "WEBVTT\r\n\r\n"
+        sub_state_count = 0
+        sub_state_start = -1.0
+        sub_state_subs = ""
+        for idx, (offset, subs) in enumerate(zip(self.offset, self.subs)):
+            start_time, end_time = offset
+            subs = unescape(subs)
+
+            # wordboundary is guaranteed not to contain whitespace
+            if len(sub_state_subs) > 0:
+                sub_state_subs += " "
+            sub_state_subs += subs
+
+            if sub_state_start == -1.0:
+                sub_state_start = start_time
+            sub_state_count += 1
+
+            if sub_state_count == words_in_cue or idx == len(self.offset) - 1:
+                subs = sub_state_subs
                 split_subs: List[str] = [
                     subs[i : i + 79] for i in range(0, len(subs), 79)
                 ]
-
                 for i in range(len(split_subs) - 1):
                     sub = split_subs[i]
                     split_at_word = True
@@ -96,8 +114,12 @@ class SubMaker:
                     if split_at_word:
                         split_subs[i] += "-"
 
-                subs = "\r\n".join(split_subs)
-
-                data += formatter(offset[0], offset[1] + self.overlapping, subs)
-            return data
-        return ""
+                data += formatter(
+                    start_time=sub_state_start,
+                    end_time=end_time,
+                    subdata="\r\n".join(split_subs),
+                )
+                sub_state_count = 0
+                sub_state_start = -1
+                sub_state_subs = ""
+        return data
