@@ -414,11 +414,21 @@ class Communicate:
                                 "We received a binary message, but we are not expecting one."
                             )
 
+                        if len(received.data) < 2:
+                            raise UnexpectedResponse(
+                                "We received a binary message, but it is missing the header length."
+                            )
+
+                        # See: https://github.com/microsoft/cognitive-services-speech-sdk-js/blob/d071d11d1e9f34d6f79d0ab6114c90eecb02ba1f/src/common.speech/WebsocketMessageFormatter.ts#L46
+                        header_length = int.from_bytes(received.data[:2], "big")
+                        if len(received.data) < header_length + 2:
+                            raise UnexpectedResponse(
+                                "We received a binary message, but it is missing the audio data."
+                            )
+
                         yield {
                             "type": "audio",
-                            "data": received.data[
-                                received.data.find(b"Path:audio\r\n") + 12 :
-                            ],
+                            "data": received.data[header_length + 2 :],
                         }
                         audio_was_received = True
                     elif received.type == aiohttp.WSMsgType.ERROR:
