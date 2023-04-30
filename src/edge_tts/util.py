@@ -36,6 +36,21 @@ async def _print_voices(*, proxy: str) -> None:
 
 async def _run_tts(args: Any) -> None:
     """Run TTS after parsing arguments from command line."""
+
+    try:
+        if sys.stdin.isatty() and sys.stdout.isatty() and not args.write_media:
+            print(
+                "Warning: TTS output will be written to the terminal. "
+                "Use --write-media to write to a file.\n"
+                "Press Ctrl+C to cancel the operation. "
+                "Press Enter to continue.",
+                file=sys.stderr,
+            )
+            input()
+    except KeyboardInterrupt:
+        print("\nOperation canceled.", file=sys.stderr)
+        return
+
     tts: Communicate = Communicate(
         args.text,
         args.voice,
