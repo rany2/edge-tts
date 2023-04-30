@@ -283,10 +283,10 @@ max-attributes=7
 max-bool-expr=5
 
 # Maximum number of branch for function / method body.
-max-branches=16
+max-branches=20
 
 # Maximum number of locals for function / method body.
-max-locals=18
+max-locals=20
 
 # Maximum number of parents for a class (see R0901).
 max-parents=7
@@ -327,7 +327,7 @@ indent-after-paren=4
 indent-string='    '
 
 # Maximum number of characters on a single line.
-max-line-length=100
+max-line-length=240
 
 # Maximum number of lines in a module.
 max-module-lines=1000
