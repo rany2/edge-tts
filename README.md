@@ -18,7 +18,7 @@ If you only want to use the `edge-tts` and `edge-playback` commands, it would be
 
 If you want to use the `edge-tts` command, you can simply run it with the following command:
 
-    $ edge-tts --text "Hello, world!" --write-media hello.mp3
+    $ edge-tts --text "Hello, world!" --write-media hello.mp3 --write-subtitles hello.vtt
 
 If you wish to play it back immediately with subtitles, you could use the `edge-playback` command:
 
@@ -57,7 +57,7 @@ You must first check the available voices with the `--list-voices` option:
 
     ...
 
-    $ edge-tts --voice ar-EG-SalmaNeural --text "مرحبا كيف حالك؟" --write-media hello_in_arabic.mp3
+    $ edge-tts --voice ar-EG-SalmaNeural --text "مرحبا كيف حالك؟" --write-media hello_in_arabic.mp3 --write-subtitles hello_in_arabic.vtt
 
 ### Custom SSML
 
@@ -67,8 +67,8 @@ Support for custom SSML has been removed since 5.0.0 because Microsoft has taken
 
 It is possible to make minor changes to the generated speech.
 
-    $ edge-tts --rate=-50% --text "Hello, world!" --write-media hello_with_rate_halved.mp3
-    $ edge-tts --volume=-50% --text "Hello, world!" --write-media hello_with_volume_halved.mp3
+    $ edge-tts --rate=-50% --text "Hello, world!" --write-media hello_with_rate_halved.mp3 --write-subtitles hello_with_rate_halved.vtt
+    $ edge-tts --volume=-50% --text "Hello, world!" --write-media hello_with_volume_halved.mp3 --write-subtitles hello_with_volume_halved.vtt
 
 In addition, it is required to use `--rate=-50%` instead of `--rate -50%` (note the lack of an equal sign) otherwise the `-50%` would be interpreted as just another argument.
 
