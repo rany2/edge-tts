@@ -449,7 +449,6 @@ class Communicate:
         """
         Save the audio and metadata to the specified files.
         """
-        written_audio: bool = False
         metadata: Union[TextIOWrapper, ContextManager[None]] = (
             open(metadata_fname, "w", encoding="utf-8")
             if metadata_fname is not None
@@ -459,15 +458,9 @@ class Communicate:
             async for message in self.stream():
                 if message["type"] == "audio":
                     audio.write(message["data"])
-                    written_audio = True
                 elif (
                     isinstance(metadata, TextIOWrapper)
                     and message["type"] == "WordBoundary"
                 ):
                     json.dump(message, metadata)
                     metadata.write("\n")
-
-        if not written_audio:
-            raise NoAudioReceived(
-                "No audio was received from the service, so the file is empty."
-            )
