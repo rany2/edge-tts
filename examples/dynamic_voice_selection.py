@@ -14,7 +14,8 @@ TEXT = "Hoy es un buen día."
 OUTPUT_FILE = "spanish.mp3"
 
 
-async def _main() -> None:
+async def amain() -> None:
+    """Main function"""
     voices = await VoicesManager.create()
     voice = voices.find(Gender="Male", Language="es")
     # Also supports Locales
@@ -25,8 +26,8 @@ async def _main() -> None:
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop_policy().get_event_loop()
     try:
-        loop.run_until_complete(_main())
+        loop.run_until_complete(amain())
     finally:
         loop.close()

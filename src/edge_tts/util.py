@@ -77,7 +77,8 @@ async def _run_tts(args: Any) -> None:
         sub_file.write(subs.generate_subs(args.words_in_cue))
 
 
-async def _async_main() -> None:
+async def amain() -> None:
+    """Async main function"""
     parser = argparse.ArgumentParser(description="Microsoft Edge TTS")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-t", "--text", help="what TTS will say")
@@ -131,9 +132,9 @@ async def _async_main() -> None:
 
 def main() -> None:
     """Run the main function using asyncio."""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_event_loop_policy().get_event_loop()
     try:
-        loop.run_until_complete(_async_main())
+        loop.run_until_complete(amain())
     finally:
         loop.close()
 
