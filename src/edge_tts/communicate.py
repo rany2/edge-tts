@@ -248,11 +248,12 @@ class Communicate:
         # Possible values for voice are:
         # - Microsoft Server Speech Text to Speech Voice (cy-GB, NiaNeural)
         # - cy-GB-NiaNeural
+	# - fil-PH-AngeloNeural
         # Always send the first variant as that is what Microsoft Edge does.
         if not isinstance(voice, str):
             raise TypeError("voice must be str")
         self.voice: str = voice
-        match = re.match(r"^([a-z]{2})-([A-Z]{2})-(.+Neural)$", voice)
+        match = re.match(r"^([a-z]{2,})-([A-Z]{2,})-(.+Neural)$", voice)
         if match is not None:
             lang = match.group(1)
             region = match.group(2)
