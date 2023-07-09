@@ -15,7 +15,7 @@ from edge_tts import Communicate, SubMaker, list_voices
 async def _print_voices(*, proxy: str) -> None:
     """Print all available voices."""
     voices = await list_voices(proxy=proxy)
-    voices = sorted(voices, key=lambda voice: voice["ShortName"])  # type: ignore
+    voices = sorted(voices, key=lambda voice: voice["ShortName"])
     for idx, voice in enumerate(voices):
         if idx != 0:
             print()
