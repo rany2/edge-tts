@@ -3,9 +3,11 @@ list_voices package for edge_tts.
 """
 
 import json
+import ssl
 from typing import Any, Dict, List, Optional
 
 import aiohttp
+import certifi
 
 from .constants import VOICE_LIST
 
@@ -20,6 +22,7 @@ async def list_voices(*, proxy: Optional[str] = None) -> Any:
     Returns:
         dict: A dictionary of voice attributes.
     """
+    ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     async with aiohttp.ClientSession(trust_env=True) as session:
         async with session.get(
             VOICE_LIST,
@@ -37,6 +40,7 @@ async def list_voices(*, proxy: Optional[str] = None) -> Any:
                 "Accept-Language": "en-US,en;q=0.9",
             },
             proxy=proxy,
+            ssl=ssl_ctx,
         ) as url:
             data = json.loads(await url.text())
     return data

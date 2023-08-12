@@ -5,6 +5,7 @@ Communicate package.
 
 import json
 import re
+import ssl
 import time
 import uuid
 from contextlib import nullcontext
@@ -23,6 +24,7 @@ from typing import (
 from xml.sax.saxutils import escape
 
 import aiohttp
+import certifi
 
 from edge_tts.exceptions import (
     NoAudioReceived,
@@ -302,9 +304,10 @@ class Communicate:
         prev_idx = -1
         shift_time = -1
 
+        ssl_ctx = ssl.create_default_context(cafile=certifi.where())
         for idx, text in enumerate(texts):
             async with aiohttp.ClientSession(
-                trust_env=True
+                trust_env=True,
             ) as session, session.ws_connect(
                 f"{WSS_URL}&ConnectionId={connect_id()}",
                 compress=15,
@@ -320,6 +323,7 @@ class Communicate:
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
                     " (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.41",
                 },
+                ssl=ssl_ctx,
             ) as websocket:
                 # download indicates whether we should be expecting audio data,
                 # this is so what we avoid getting binary data from the websocket
