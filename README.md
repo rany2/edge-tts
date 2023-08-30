@@ -72,8 +72,6 @@ It is possible to make minor changes to the generated speech.
 
 In addition, it is required to use `--rate=-50%` instead of `--rate -50%` (note the lack of an equal sign) otherwise the `-50%` would be interpreted as just another argument.
 
-**NOTE**: `--pitch` was removed in 6.0.3 as it no longer appears to have any effect.
-
 ### Note on the `edge-playback` command
 
 `edge-playback` is just a wrapper around `edge-tts` that plays back the generated speech. It takes the same arguments as the `edge-tts` option.
