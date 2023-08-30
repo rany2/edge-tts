@@ -57,6 +57,7 @@ async def _run_tts(args: Any) -> None:
         proxy=args.proxy,
         rate=args.rate,
         volume=args.volume,
+        pitch=args.pitch,
     )
     subs: SubMaker = SubMaker()
     with open(
@@ -97,6 +98,7 @@ async def amain() -> None:
     )
     parser.add_argument("--rate", help="set TTS rate. Default +0%%.", default="+0%")
     parser.add_argument("--volume", help="set TTS volume. Default +0%%.", default="+0%")
+    parser.add_argument("--pitch", help="set TTS pitch. Default +0Hz.", default="+0Hz")
     parser.add_argument(
         "--words-in-cue",
         help="number of words in a subtitle cue. Default: 10.",
