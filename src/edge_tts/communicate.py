@@ -152,7 +152,7 @@ def split_text_by_byte_length(
         yield new_text
 
 
-def mkssml(text: Union[str, bytes], voice: str, rate: str, volume: str) -> str:
+def mkssml(text: Union[str, bytes], voice: str, rate: str, volume: str, pitch: str) -> str:
     """
     Creates a SSML string from the given parameters.
 
@@ -164,7 +164,7 @@ def mkssml(text: Union[str, bytes], voice: str, rate: str, volume: str) -> str:
 
     ssml = (
         "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>"
-        f"<voice name='{voice}'><prosody pitch='+0Hz' rate='{rate}' volume='{volume}'>"
+        f"<voice name='{voice}'><prosody pitch='{pitch}' rate='{rate}' volume='{volume}'>"
         f"{text}</prosody></voice></speak>"
     )
     return ssml
@@ -203,7 +203,7 @@ def ssml_headers_plus_data(request_id: str, timestamp: str, ssml: str) -> str:
     )
 
 
-def calc_max_mesg_size(voice: str, rate: str, volume: str) -> int:
+def calc_max_mesg_size(voice: str, rate: str, volume: str, pitch: str) -> int:
     """Calculates the maximum message size for the given voice, rate, and volume.
 
     Returns:
@@ -215,7 +215,7 @@ def calc_max_mesg_size(voice: str, rate: str, volume: str) -> int:
             ssml_headers_plus_data(
                 connect_id(),
                 date_to_string(),
-                mkssml("", voice, rate, volume),
+                mkssml("", voice, rate, volume, pitch),
             )
         )
         + 50  # margin of error
@@ -235,6 +235,7 @@ class Communicate:
         *,
         rate: str = "+0%",
         volume: str = "+0%",
+        pitch: str = "+0Hz",
         proxy: Optional[str] = None,
     ):
         """
@@ -289,6 +290,12 @@ class Communicate:
             raise ValueError(f"Invalid volume '{volume}'.")
         self.volume: str = volume
 
+        if not isinstance(pitch, str):
+            raise TypeError("pitch must be str")
+        if re.match(r"^[+-]\d+Hz$", pitch) is None:
+            raise ValueError(f"Invalid pitch '{pitch}'.")
+        self.pitch: str = pitch
+
         if proxy is not None and not isinstance(proxy, str):
             raise TypeError("proxy must be str")
         self.proxy: Optional[str] = proxy
@@ -298,7 +305,7 @@ class Communicate:
 
         texts = split_text_by_byte_length(
             escape(remove_incompatible_characters(self.text)),
-            calc_max_mesg_size(self.voice, self.rate, self.volume),
+            calc_max_mesg_size(self.voice, self.rate, self.volume, self.pitch),
         )
         final_utterance: Dict[int, int] = {}
         prev_idx = -1
@@ -362,7 +369,7 @@ class Communicate:
                     ssml_headers_plus_data(
                         connect_id(),
                         date,
-                        mkssml(text, self.voice, self.rate, self.volume),
+                        mkssml(text, self.voice, self.rate, self.volume, self.pitch),
                     )
                 )
 
