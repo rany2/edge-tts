@@ -123,3 +123,50 @@ class SubMaker:
                 sub_state_start = -1
                 sub_state_subs = ""
         return data
+    
+    def generate_cn_subs(self,text)->str:
+        PUNCTUATION=['，','。','！','？','；','：','\n','“','”',',','!']
+        def clause(self)->list[str]:
+            start=0
+            i=0
+            text_list=[]
+            while(i<len(text)):
+                if text[i] in PUNCTUATION:
+                    try:
+                        while text[i] in PUNCTUATION:
+                            i+=1
+                    except IndexError:
+                        pass
+                    text_list.append(text[start:i])
+                    start=i
+                i+=1
+            return text_list
+        
+        self.text_list=clause(self)
+        
+        if len(self.subs) != len(self.offset):
+            raise ValueError("subs and offset are not of the same length")
+        data = "WEBVTT\r\n\r\n"
+        j = 0
+        for text in self.text_list:
+            try:
+                start_time = self.offset[j][0]
+            except IndexError:
+                return data
+            try:
+                while (self.subs[j + 1] in text):
+                    j += 1
+            except IndexError:
+                pass
+            data += formatter(start_time, self.offset[j][1], text)
+            j += 1
+        return data
+
+if __name__=="__main__":
+    generator=SubMaker()
+    generator.create_sub((0,15000)," 你好,")
+    generator.create_sub((15000,15000),"世界!")
+    print(generator.generate_cn_subs("你好,世界!"))
+    # print(generator.generate_subs())
+    print()
+    
