@@ -36,22 +36,10 @@ async def _print_voices(*, proxy: str) -> None:
             print(f"{pretty_key_name}: {voice[key]}")
 
 
-def spinoff_sentence(sentence):
+def _spinoff_sentence(sentence):
     last_word = sentence[-1]
     last_word_num = sentence.count(last_word)
     return (sentence, last_word, last_word_num)
-
-async def tts_subtitle(text, three_dimensional_list, voice, audio_path, subtitle_path):
-    communicate = edge_tts.Communicate(text, voice)
-    submaker = edge_tts.SubMaker()
-    with open(audio_path, "wb") as file:
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                file.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
-                submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
-    with open(subtitle_path, "w", encoding="utf-8") as file:
-        file.write(submaker.generate_subs(three_dimensional_list=three_dimensional_list))
 
 async def _run_tts(args: Any) -> None:
     """Run TTS after parsing arguments from command line."""
@@ -85,7 +73,7 @@ async def _run_tts(args: Any) -> None:
     sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
     three_dimensional_list = []
     for sentence in sentences:
-        three_dimensional_list.append(spinoff_sentence(sentence))
+        three_dimensional_list.append(_spinoff_sentence(sentence))
 
     with open(
         args.write_media, "wb"
