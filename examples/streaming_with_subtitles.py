@@ -29,7 +29,7 @@ async def amain() -> None:
                 submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
 
     with open(WEBVTT_FILE, "w", encoding="utf-8") as file:
-        file.write(submaker.generate_subs())
+        file.write(submaker.generate_subs(TEXT))
 
 
 if __name__ == "__main__":

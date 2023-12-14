@@ -239,7 +239,7 @@ class Communicate:
         volume: str = "+0%",
         pitch: str = "+0Hz",
         proxy: Optional[str] = None,
-    ):
+    ):  # pylint: disable=too-many-arguments
         """
         Initializes the Communicate class.
 
@@ -302,7 +302,9 @@ class Communicate:
             raise TypeError("proxy must be str")
         self.proxy: Optional[str] = proxy
 
-    async def stream(self) -> AsyncGenerator[Dict[str, Any], None]:
+    async def stream(  # pylint: disable=too-many-statements
+        self,
+    ) -> AsyncGenerator[Dict[str, Any], None]:
         """Streams audio and metadata from the service."""
 
         texts = split_text_by_byte_length(
