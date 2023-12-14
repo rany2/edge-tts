@@ -10,13 +10,14 @@ from typing import List, Tuple
 from xml.sax.saxutils import escape, unescape
 
 
-def formatter(start_time: float, end_time: float, subdata: str) -> str:
+def formatter(sub_line_count: int, start_time: float, end_time: float, subdata: str) -> str:
     """
     formatter returns the timecode and the text of the subtitle.
     """
     return (
-        f"{mktimestamp(start_time)} --> {mktimestamp(end_time)}\r\n"
-        f"{escape(subdata)}\r\n\r\n"
+        f"{sub_line_count}\n"
+        f"{mktimestamp(start_time)} --> {mktimestamp(end_time)}\n"
+        f"{escape(subdata)}\n\n"
     )
 
 
@@ -32,8 +33,8 @@ def mktimestamp(time_unit: float) -> str:
     hour = math.floor(time_unit / 10**7 / 3600)
     minute = math.floor((time_unit / 10**7 / 60) % 60)
     seconds = (time_unit / 10**7) % 60
-    return f"{hour:02d}:{minute:02d}:{seconds:06.3f}"
-
+    # return f"{hour:02d}:{minute:02d}:{seconds:06.3f}"
+    return f"{hour:02d}:{minute:02d}:{seconds:06.3f}".replace(".", ",")
 
 class SubMaker:
     """
@@ -62,7 +63,7 @@ class SubMaker:
         self.offset.append((timestamp[0], timestamp[0] + timestamp[1]))
         self.subs.append(text)
 
-    def generate_subs(self, words_in_cue: int = 10) -> str:
+    def generate_subs(self, three_dimensional_list, words_in_cue: int = 10) -> str:
         """
         generate_subs generates the complete subtitle file.
 
@@ -71,6 +72,9 @@ class SubMaker:
 
         Returns:
             str: The complete subtitle file.
+
+        three_dimensional_list：
+            [(sentence, last_word, last_word_num)， (sentence, last_word, last_word_num)]
         """
         if len(self.subs) != len(self.offset):
             raise ValueError("subs and offset are not of the same length")
@@ -78,25 +82,30 @@ class SubMaker:
         if words_in_cue <= 0:
             raise ValueError("words_in_cue must be greater than 0")
 
-        data = "WEBVTT\r\n\r\n"
+        # data = "WEBVTT\r\n\r\n"
+        data = ''
         sub_state_count = 0
         sub_state_start = -1.0
         sub_state_subs = ""
+        sub_line_count = 0     # new variable used to indicate which line of subtitle this is
         for idx, (offset, subs) in enumerate(zip(self.offset, self.subs)):
             start_time, end_time = offset
             subs = unescape(subs)
 
             # wordboundary is guaranteed not to contain whitespace
-            if len(sub_state_subs) > 0:
-                sub_state_subs += " "
+            # if len(sub_state_subs) > 0:
+            #     sub_state_subs += " "
             sub_state_subs += subs
 
             if sub_state_start == -1.0:
                 sub_state_start = start_time
             sub_state_count += 1
 
-            if sub_state_count == words_in_cue or idx == len(self.offset) - 1:
-                subs = sub_state_subs
+            sentence, last_word, last_word_num = three_dimensional_list[sub_line_count]
+            if sub_state_subs.count(last_word) == last_word_num or idx == len(self.offset) - 1:
+                sub_line_count += 1
+                # subs = sub_state_subs
+                subs = sentence
                 split_subs: List[str] = [
                     subs[i : i + 79] for i in range(0, len(subs), 79)
                 ]
@@ -115,9 +124,10 @@ class SubMaker:
                         split_subs[i] += "-"
 
                 data += formatter(
+                    sub_line_count=sub_line_count,
                     start_time=sub_state_start,
                     end_time=end_time,
-                    subdata="\r\n".join(split_subs),
+                    subdata="".join(split_subs),
                 )
                 sub_state_count = 0
                 sub_state_start = -1

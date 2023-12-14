@@ -11,11 +11,13 @@ from typing import Any, TextIO, Union
 
 from edge_tts import Communicate, SubMaker, list_voices
 
+import asyncio
+import re
 
 async def _print_voices(*, proxy: str) -> None:
     """Print all available voices."""
     voices = await list_voices(proxy=proxy)
-    voices = sorted(voices, key=lambda voice: voice["ShortName"])
+    voices = sorted(voices, key=lambda voice: voice["ShortName"])  # type: ignore
     for idx, voice in enumerate(voices):
         if idx != 0:
             print()
@@ -33,6 +35,23 @@ async def _print_voices(*, proxy: str) -> None:
             pretty_key_name = key if key != "ShortName" else "Name"
             print(f"{pretty_key_name}: {voice[key]}")
 
+
+def spinoff_sentence(sentence):
+    last_word = sentence[-1]
+    last_word_num = sentence.count(last_word)
+    return (sentence, last_word, last_word_num)
+
+async def tts_subtitle(text, three_dimensional_list, voice, audio_path, subtitle_path):
+    communicate = edge_tts.Communicate(text, voice)
+    submaker = edge_tts.SubMaker()
+    with open(audio_path, "wb") as file:
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                file.write(chunk["data"])
+            elif chunk["type"] == "WordBoundary":
+                submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
+    with open(subtitle_path, "w", encoding="utf-8") as file:
+        file.write(submaker.generate_subs(three_dimensional_list=three_dimensional_list))
 
 async def _run_tts(args: Any) -> None:
     """Run TTS after parsing arguments from command line."""
@@ -57,9 +76,17 @@ async def _run_tts(args: Any) -> None:
         proxy=args.proxy,
         rate=args.rate,
         volume=args.volume,
-        pitch=args.pitch,
     )
-    subs: SubMaker = SubMaker()
+
+    submaker: SubMaker = SubMaker()
+
+    pattern_chi = r"[：“”‘’──{}【】·《》〈〉，、；。？！]"
+    sentences = re.split(pattern_chi, args.text)
+    sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
+    three_dimensional_list = []
+    for sentence in sentences:
+        three_dimensional_list.append(spinoff_sentence(sentence))
+
     with open(
         args.write_media, "wb"
     ) if args.write_media else sys.stdout.buffer as audio_file:
@@ -67,7 +94,7 @@ async def _run_tts(args: Any) -> None:
             if chunk["type"] == "audio":
                 audio_file.write(chunk["data"])
             elif chunk["type"] == "WordBoundary":
-                subs.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
+                submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
 
     sub_file: Union[TextIOWrapper, TextIO] = (
         open(args.write_subtitles, "w", encoding="utf-8")
@@ -75,7 +102,7 @@ async def _run_tts(args: Any) -> None:
         else sys.stderr
     )
     with sub_file:
-        sub_file.write(subs.generate_subs(args.words_in_cue))
+        sub_file.write(submaker.generate_subs(three_dimensional_list=three_dimensional_list))
 
 
 async def amain() -> None:
@@ -98,7 +125,6 @@ async def amain() -> None:
     )
     parser.add_argument("--rate", help="set TTS rate. Default +0%%.", default="+0%")
     parser.add_argument("--volume", help="set TTS volume. Default +0%%.", default="+0%")
-    parser.add_argument("--pitch", help="set TTS pitch. Default +0Hz.", default="+0Hz")
     parser.add_argument(
         "--words-in-cue",
         help="number of words in a subtitle cue. Default: 10.",
