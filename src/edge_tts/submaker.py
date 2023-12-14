@@ -10,7 +10,9 @@ from typing import List, Tuple
 from xml.sax.saxutils import escape, unescape
 
 
-def formatter(sub_line_count: int, start_time: float, end_time: float, subdata: str) -> str:
+def formatter(
+    sub_line_count: int, start_time: float, end_time: float, subdata: str
+) -> str:
     """
     formatter returns the timecode and the text of the subtitle.
     """
@@ -35,6 +37,7 @@ def mktimestamp(time_unit: float) -> str:
     seconds = (time_unit / 10**7) % 60
     # return f"{hour:02d}:{minute:02d}:{seconds:06.3f}"
     return f"{hour:02d}:{minute:02d}:{seconds:06.3f}".replace(".", ",")
+
 
 class SubMaker:
     """
@@ -83,11 +86,13 @@ class SubMaker:
             raise ValueError("words_in_cue must be greater than 0")
 
         # data = "WEBVTT\r\n\r\n"
-        data = ''
+        data = ""
         sub_state_count = 0
         sub_state_start = -1.0
         sub_state_subs = ""
-        sub_line_count = 0     # new variable used to indicate which line of subtitle this is
+        sub_line_count = (
+            0  # new variable used to indicate which line of subtitle this is
+        )
         for idx, (offset, subs) in enumerate(zip(self.offset, self.subs)):
             start_time, end_time = offset
             subs = unescape(subs)
@@ -102,7 +107,10 @@ class SubMaker:
             sub_state_count += 1
 
             sentence, last_word, last_word_num = three_dimensional_list[sub_line_count]
-            if sub_state_subs.count(last_word) == last_word_num or idx == len(self.offset) - 1:
+            if (
+                sub_state_subs.count(last_word) == last_word_num
+                or idx == len(self.offset) - 1
+            ):
                 sub_line_count += 1
                 # subs = sub_state_subs
                 subs = sentence

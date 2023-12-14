@@ -152,7 +152,9 @@ def split_text_by_byte_length(
         yield new_text
 
 
-def mkssml(text: Union[str, bytes], voice: str, rate: str, volume: str, pitch: str) -> str:
+def mkssml(
+    text: Union[str, bytes], voice: str, rate: str, volume: str, pitch: str
+) -> str:
     """
     Creates a SSML string from the given parameters.
 

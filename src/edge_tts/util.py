@@ -5,14 +5,13 @@ Main package.
 
 import argparse
 import asyncio
+import re
 import sys
 from io import TextIOWrapper
 from typing import Any, TextIO, Union
 
 from edge_tts import Communicate, SubMaker, list_voices
 
-import asyncio
-import re
 
 async def _print_voices(*, proxy: str) -> None:
     """Print all available voices."""
@@ -40,6 +39,7 @@ def _spinoff_sentence(sentence):
     last_word = sentence[-1]
     last_word_num = sentence.count(last_word)
     return (sentence, last_word, last_word_num)
+
 
 async def _run_tts(args: Any) -> None:
     """Run TTS after parsing arguments from command line."""
@@ -90,7 +90,9 @@ async def _run_tts(args: Any) -> None:
         else sys.stderr
     )
     with sub_file:
-        sub_file.write(submaker.generate_subs(three_dimensional_list=three_dimensional_list))
+        sub_file.write(
+            submaker.generate_subs(three_dimensional_list=three_dimensional_list)
+        )
 
 
 async def amain() -> None:
@@ -113,6 +115,7 @@ async def amain() -> None:
     )
     parser.add_argument("--rate", help="set TTS rate. Default +0%%.", default="+0%")
     parser.add_argument("--volume", help="set TTS volume. Default +0%%.", default="+0%")
+    parser.add_argument("--pitch", help="set TTS pitch. Default +0Hz.", default="+0Hz")
     parser.add_argument(
         "--words-in-cue",
         help="number of words in a subtitle cue. Default: 10.",
