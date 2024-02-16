@@ -2,7 +2,6 @@
 Main package.
 """
 
-
 import argparse
 import asyncio
 import sys
@@ -60,9 +59,9 @@ async def _run_tts(args: Any) -> None:
         pitch=args.pitch,
     )
     subs: SubMaker = SubMaker()
-    with open(
-        args.write_media, "wb"
-    ) if args.write_media else sys.stdout.buffer as audio_file:
+    with (
+        open(args.write_media, "wb") if args.write_media else sys.stdout.buffer
+    ) as audio_file:
         async for chunk in tts.stream():
             if chunk["type"] == "audio":
                 audio_file.write(chunk["data"])
