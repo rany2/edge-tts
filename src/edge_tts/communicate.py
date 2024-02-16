@@ -353,7 +353,7 @@ class Communicate:
             )
             return True
 
-        def parse_metadata():
+        def parse_metadata() -> Dict[str, Any]:
             for meta_obj in json.loads(data)["Metadata"]:
                 meta_type = meta_obj["Type"]
                 if meta_type == "WordBoundary":
@@ -365,10 +365,10 @@ class Communicate:
                         "duration": current_duration,
                         "text": meta_obj["Data"]["text"]["Text"],
                     }
-                elif meta_type in ("SessionEnd",):
+                if meta_type in ("SessionEnd",):
                     continue
-                else:
-                    raise UnknownResponse(f"Unknown metadata type: {meta_type}")
+                raise UnknownResponse(f"Unknown metadata type: {meta_type}")
+            raise UnexpectedResponse("No WordBoundary metadata found")
 
         # Split the text into multiple strings if it is too long for the service.
         texts = split_text_by_byte_length(
