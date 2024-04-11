@@ -2,6 +2,8 @@
 Communicate package.
 """
 
+import asyncio
+import concurrent.futures
 import json
 import re
 import ssl
@@ -21,6 +23,7 @@ from typing import (
     Union,
 )
 from xml.sax.saxutils import escape
+from queue import Queue
 
 import aiohttp
 import certifi
@@ -498,3 +501,38 @@ class Communicate:
                 ):
                     json.dump(message, metadata)
                     metadata.write("\n")
+
+    def stream_sync(self) -> Generator[Dict[str, Any], None, None]:
+        """Synchronous interface for async stream method"""
+
+        def fetch_async_items(queue):
+            async def get_items():
+                async for item in self.stream():
+                    queue.put(item)
+                queue.put(None)
+
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(get_items())
+            loop.close()
+
+        queue = Queue()
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.submit(fetch_async_items, queue)
+
+            while True:
+                item = queue.get()
+                if item is None:
+                    break
+                yield item
+
+    def save_sync(
+        self,
+        audio_fname: Union[str, bytes],
+        metadata_fname: Optional[Union[str, bytes]] = None,
+    ) -> None:
+        """Synchronous interface for async save method."""
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(asyncio.run, self.save(audio_fname))
+            future.result()
