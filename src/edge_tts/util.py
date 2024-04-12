@@ -133,11 +133,7 @@ async def amain() -> None:
 
 def main() -> None:
     """Run the main function using asyncio."""
-    loop = asyncio.get_event_loop_policy().get_event_loop()
-    try:
-        loop.run_until_complete(amain())
-    finally:
-        loop.close()
+    asyncio.run(amain())
 
 
 if __name__ == "__main__":
