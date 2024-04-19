@@ -7,10 +7,9 @@ VOICE = "zh-CN-YunxiNeural"
 OUTPUT_FILE = "test.mp3"
 WEBVTT_FILE = "test.vtt"
 
-
 async def amain() -> None:
     """Main function"""
-    communicate = Communicate(TEXT, VOICE)
+    communicate = Communicate(TEXT, VOICE,rate="+50%",volume="+50%")
     submaker = edge_tts.SubMaker()
     with open(OUTPUT_FILE, "wb") as file:
         async for chunk in communicate.stream():
