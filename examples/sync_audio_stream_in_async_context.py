@@ -26,7 +26,7 @@ def main() -> None:
 
 
 async def amain() -> None:
-    """ "
+    """
     Async main function to call sync main function
 
     This demonstrates that this works even when called from an async function.
