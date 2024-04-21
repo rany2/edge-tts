@@ -11,6 +11,7 @@ import time
 import uuid
 from contextlib import nullcontext
 from io import TextIOWrapper
+from queue import Queue
 from typing import (
     Any,
     AsyncGenerator,
@@ -23,7 +24,6 @@ from typing import (
     Union,
 )
 from xml.sax.saxutils import escape
-from queue import Queue
 
 import aiohttp
 import certifi
@@ -505,8 +505,8 @@ class Communicate:
     def stream_sync(self) -> Generator[Dict[str, Any], None, None]:
         """Synchronous interface for async stream method"""
 
-        def fetch_async_items(queue):
-            async def get_items():
+        def fetch_async_items(queue: Queue) -> None:  # type: ignore
+            async def get_items() -> None:
                 async for item in self.stream():
                     queue.put(item)
                 queue.put(None)
@@ -516,7 +516,7 @@ class Communicate:
             loop.run_until_complete(get_items())
             loop.close()
 
-        queue = Queue()
+        queue: Queue = Queue()  # type: ignore
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             executor.submit(fetch_async_items, queue)
@@ -534,5 +534,7 @@ class Communicate:
     ) -> None:
         """Synchronous interface for async save method."""
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(asyncio.run, self.save(audio_fname))
+            future = executor.submit(
+                asyncio.run, self.save(audio_fname, metadata_fname)
+            )
             future.result()

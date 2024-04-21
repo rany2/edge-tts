@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
 """
-This example shows that sync version of string function also works when run from
-a sync function called itself from an async function.
-The simple implementation of stream_sync() with only asyncio.run would fail in this scenario,
-that's why ThreadPoolExecutor is used in implementation.
-
+This example shows the sync version of stream function which also
+works when run from a sync function called itself from an async function.
 """
 
 import asyncio
@@ -28,7 +25,12 @@ def main() -> None:
                 print(f"WordBoundary: {chunk}")
 
 
-async def amain():
+async def amain() -> None:
+    """ "
+    Async main function to call sync main function
+
+    This demonstrates that this works even when called from an async function.
+    """
     main()
 
 
