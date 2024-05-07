@@ -145,9 +145,7 @@ class SubMaker:
         #     return text_list
 
         def clause(self) -> list[str]:
-            # 构建正则表达式模式，匹配任意一个或多个标点符号
             pattern = '(' + '|'.join(punc for punc in PUNCTUATION) + ')'
-            # 使用正则表达式分割文本
             text_list = re.split(pattern, text)
 
             index = 0
