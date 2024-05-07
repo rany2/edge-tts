@@ -32,7 +32,7 @@ async def amain() -> None:
 
     with open(WEBVTT_FILE, "w", encoding="utf-8") as file:
         file.write(submaker.generate_subs_based_on_punc(TEXT))
-        file.write(submaker.generate_subs())
+        # file.write(submaker.generate_subs())
 
 
 loop = asyncio.get_event_loop_policy().get_event_loop()
