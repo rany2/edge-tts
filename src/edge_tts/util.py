@@ -2,7 +2,6 @@
 Main package.
 """
 
-
 import argparse
 import asyncio
 import sys
@@ -60,9 +59,9 @@ async def _run_tts(args: Any) -> None:
         pitch=args.pitch,
     )
     subs: SubMaker = SubMaker()
-    with open(
-        args.write_media, "wb"
-    ) if args.write_media else sys.stdout.buffer as audio_file:
+    with (
+        open(args.write_media, "wb") if args.write_media else sys.stdout.buffer
+    ) as audio_file:
         async for chunk in tts.stream():
             if chunk["type"] == "audio":
                 audio_file.write(chunk["data"])
@@ -134,11 +133,7 @@ async def amain() -> None:
 
 def main() -> None:
     """Run the main function using asyncio."""
-    loop = asyncio.get_event_loop_policy().get_event_loop()
-    try:
-        loop.run_until_complete(amain())
-    finally:
-        loop.close()
+    asyncio.run(amain())
 
 
 if __name__ == "__main__":
