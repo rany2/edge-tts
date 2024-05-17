@@ -444,9 +444,7 @@ class Communicate:
                         # Send the next SSML request to the service.
                         if not await send_ssml_request():
                             break
-                    elif path in (b"response", b"turn.start"):
-                        pass
-                    else:
+                    elif path not in (b"response", b"turn.start"):
                         raise UnknownResponse(
                             "The response from the service is not recognized.\n"
                             + received.data
