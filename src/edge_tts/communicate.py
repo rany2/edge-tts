@@ -260,7 +260,8 @@ class Communicate:
         volume: str = "+0%",
         pitch: str = "+0Hz",
         proxy: Optional[str] = None,
-        receive_timeout: int = 5,
+        connect_timeout: int = 10,
+        receive_timeout: int = 60,
     ):
         """
         Initializes the Communicate class.
@@ -306,9 +307,14 @@ class Communicate:
             raise TypeError("proxy must be str")
         self.proxy: Optional[str] = proxy
 
-        if not isinstance(receive_timeout, int):
-            raise TypeError("receive_timeout must be int")
-        self.receive_timeout: int = receive_timeout
+        if not isinstance(connect_timeout, int) or not isinstance(receive_timeout, int):
+            raise TypeError("connect_timeout and receive_timeout must be int")
+        self.session_timeout = aiohttp.ClientTimeout(
+            total=None,
+            connect=None,
+            sock_connect=connect_timeout,
+            sock_read=receive_timeout,
+        )
 
     async def stream(self) -> AsyncGenerator[Dict[str, Any], None]:
         """Streams audio and metadata from the service."""
@@ -390,11 +396,11 @@ class Communicate:
         ssl_ctx = ssl.create_default_context(cafile=certifi.where())
         async with aiohttp.ClientSession(
             trust_env=True,
+            timeout=self.session_timeout,
         ) as session, session.ws_connect(
             f"{WSS_URL}&ConnectionId={connect_id()}",
             compress=15,
             proxy=self.proxy,
-            receive_timeout=self.receive_timeout,
             headers={
                 "Pragma": "no-cache",
                 "Cache-Control": "no-cache",
