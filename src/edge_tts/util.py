@@ -8,7 +8,7 @@ import sys
 from io import TextIOWrapper
 from typing import Any, TextIO, Union
 
-from edge_tts import Communicate, SubMaker, list_voices
+from . import Communicate, SubMaker, list_voices
 
 
 async def _print_voices(*, proxy: str) -> None:
