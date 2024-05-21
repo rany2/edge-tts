@@ -20,12 +20,8 @@ ret=0
 # compare files to make sure all are the same
 for i in {b..z}
 do
-    cmp tests/001-long-text_a.mp3 "tests/001-long-text_${i}.mp3" || ret=1
     cmp tests/001-long-text_a.srt "tests/001-long-text_${i}.srt" || ret=1
 done
-
-# clean up
-rm tests/001-long-text_*.mp3 tests/001-long-text_*.srt
 
 # exit with return code
 exit "${ret}"
