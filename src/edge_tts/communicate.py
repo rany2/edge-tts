@@ -530,6 +530,46 @@ class Communicate:
                     json.dump(message, metadata)
                     metadata.write("\n")
 
+
+
+    async def saveMore(
+        self,
+        audio_fname: Union[str, bytes, BytesIO, BinaryIO],
+        metadata_fname: Optional[Union[str, bytes, BytesIO, TextIO]] = None,
+    ) -> None:
+        """
+        Save the audio and metadata to the specified files or file-like objects.
+        """
+        def get_file_object(file, mode):
+            if isinstance(file, (str, bytes)):
+                return open(file, mode)
+            elif isinstance(file, (BytesIO, TextIOWrapper)):
+                return file
+            else:
+                raise TypeError(f"Unsupported file type: {type(file)}")
+
+        metadata: Union[TextIO, ContextManager[None]] = (
+            get_file_object(metadata_fname, "w") if metadata_fname is not None else nullcontext()
+        )
+
+        with metadata:
+            audio = get_file_object(audio_fname, "wb")
+            try:
+                async for message in self.stream():
+                    if message["type"] == "audio":
+                        audio.write(message["data"])
+                    elif (
+                        isinstance(metadata, TextIO)
+                        and message["type"] == "WordBoundary"
+                    ):
+                        json.dump(message, metadata)
+                        metadata.write("\n")
+            finally:
+                if isinstance(audio_fname, (str, bytes)):
+                    audio.close()
+    
+    
+    
     def stream_sync(self) -> Generator[Dict[str, Any], None, None]:
         """Synchronous interface for async stream method"""
 
