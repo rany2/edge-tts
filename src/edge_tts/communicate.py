@@ -27,7 +27,7 @@ from xml.sax.saxutils import escape
 import aiohttp
 import certifi
 
-from .constants import WSS_URL
+from .constants import WSS_HEADERS, WSS_URL
 from .exceptions import (
     NoAudioReceived,
     UnexpectedResponse,
@@ -369,15 +369,7 @@ class Communicate:
             f"{WSS_URL}&ConnectionId={connect_id()}",
             compress=15,
             proxy=self.proxy,
-            headers={
-                "Pragma": "no-cache",
-                "Cache-Control": "no-cache",
-                "Origin": "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Accept-Language": "en-US,en;q=0.9",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                " (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0",
-            },
+            headers=WSS_HEADERS,
             ssl=ssl_ctx,
         ) as websocket:
             # Send the request to the service.
