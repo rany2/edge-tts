@@ -4,7 +4,7 @@ This project demonstrates how to run Edge TTS as a serverless API using [Cerebri
 
 ## Overview
 
-The `main.py` file contains a function `run` that takes a text input and an optional voice parameter to generate audio and subtitles using Edge TTS.
+The `main.py` file contains a function `run` that takes a text input and an optional voice parameter to generate audio and subtitles using Edge TTS. This example specifically streams the output.
 
 ## Installation
 
@@ -14,7 +14,7 @@ The `main.py` file contains a function `run` that takes a text input and an opti
 
 ## Usage
 
-Once deployed, you should be able to make a curl request similar to:
+Once deployed, you should be able to make a curl request similar to the below. You can find this url on your Cerebrium dashboard.
 ```
 curl --location 'https://api.cortex.cerebrium.ai/v4/p-xxxxxx/serverless-api/run' \
 --header 'Authorization: Bearer <AUTH_TOKEN>' \
