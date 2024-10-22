@@ -73,6 +73,10 @@ It is possible to make minor changes to the generated speech.
 
 In addition, it is required to use `--rate=-50%` instead of `--rate -50%` (note the lack of an equal sign) otherwise the `-50%` would be interpreted as just another argument.
 
+### Deploying to Serverless API
+
+See the [examples/serverless-api](examples/serverless-api) folder for more information on how to deploy to [Cerebrium](https://www.cerebrium.ai).
+
 ### Note on the `edge-playback` command
 
 `edge-playback` is just a wrapper around `edge-tts` that plays back the generated speech. It takes the same arguments as the `edge-tts` option.
