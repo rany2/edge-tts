@@ -1,7 +1,9 @@
 
 import edge_tts
+from typing import Dict
+from typing import AsyncGenerator
 
-async def run(text: str, voice: str = "en-GB-SoniaNeural"): 
+async def run(text: str, voice: str = "en-GB-SoniaNeural") -> AsyncGenerator[Dict[str, str], None]:
 
     communicate = edge_tts.Communicate(text, voice)
     submaker = edge_tts.SubMaker()
@@ -15,7 +17,7 @@ async def run(text: str, voice: str = "en-GB-SoniaNeural"):
             submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
 
     subtitles = submaker.generate_subs()
-    return {
+    yield {
         "audio_data": audio_data.decode("latin-1"),
         "subtitles": subtitles
     }
