@@ -7,7 +7,7 @@ exclude = "[.*]"
 
 [cerebrium.hardware]
 cpu = 2
-memory = 12.0
+memory = 6.0
 compute = "CPU"
 
 [cerebrium.scaling]
