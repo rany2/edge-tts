@@ -16,9 +16,10 @@ Usage:
     and an optional voice parameter to generate audio and subtitles.
 """
 
-from typing import Dict
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict
+
 import edge_tts
+
 
 async def run(text: str, voice: str = "en-GB-SoniaNeural") -> AsyncGenerator[Dict[str, str], None]:
     """
