@@ -11,8 +11,8 @@ VOICE_LIST = f"https://{BASE_URL}/voices/list?trustedclienttoken={TRUSTED_CLIENT
 CHROMIUM_MAJOR_VERSION = "129"
 BASE_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    f" (KHTML, like Gecko) Chrome/${CHROMIUM_MAJOR_VERSION}.0.0.0 Safari/537.36"
-    f" Edg/${CHROMIUM_MAJOR_VERSION}.0.0.0",
+    f" (KHTML, like Gecko) Chrome/{CHROMIUM_MAJOR_VERSION}.0.0.0 Safari/537.36"
+    f" Edg/{CHROMIUM_MAJOR_VERSION}.0.0.0",
     "Accept-Encoding": "gzip, deflate, br",
     "Accept-Language": "en-US,en;q=0.9",
 }
