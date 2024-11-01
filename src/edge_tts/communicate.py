@@ -251,6 +251,8 @@ class Communicate:
         proxy: Optional[str] = None,
         connect_timeout: int = 10,
         receive_timeout: int = 60,
+        sec_ms_gec: str = "DBAF107D60B67DF57BBE06D27B5B4BC0078BF95E7AECC13B46AD4FB26F7DC125",
+        sec_ms_gec_version: str = "1-130.0.2849.56",
     ):
         """
         Initializes the Communicate class.
@@ -366,7 +368,7 @@ class Communicate:
             trust_env=True,
             timeout=self.session_timeout,
         ) as session, session.ws_connect(
-            f"{WSS_URL}&ConnectionId={connect_id()}",
+            f"{WSS_URL}&Sec-MS-GEC={sec_ms_gec}&Sec-MS-GEC-Version={sec_ms_gec_version}&ConnectionId={connect_id()}",
             compress=15,
             proxy=self.proxy,
             headers=WSS_HEADERS,
