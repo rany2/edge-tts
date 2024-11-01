@@ -81,6 +81,7 @@ In addition, it is required to use `--rate=-50%` instead of `--rate -50%` (note 
 
 It is possible to use the `edge-tts` module directly from Python. For a list of example applications:
 
+* https://github.com/souzatharsis/podcastfy/blob/main/podcastfy/tts/providers/edge.py
 * https://github.com/rany2/edge-tts/tree/master/examples
 * https://github.com/rany2/edge-tts/blob/master/src/edge_tts/util.py
 * https://github.com/hasscc/hass-edge-tts/blob/main/custom_components/edge_tts/tts.py
