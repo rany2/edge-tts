@@ -28,6 +28,7 @@ import aiohttp
 import certifi
 
 from .constants import WSS_HEADERS, WSS_URL
+from .drm import generate_sec_ms_gec_token, generate_sec_ms_gec_version
 from .exceptions import (
     NoAudioReceived,
     UnexpectedResponse,
@@ -366,7 +367,9 @@ class Communicate:
             trust_env=True,
             timeout=self.session_timeout,
         ) as session, session.ws_connect(
-            f"{WSS_URL}&ConnectionId={connect_id()}",
+            f"{WSS_URL}&Sec-MS-GEC={generate_sec_ms_gec_token()}"
+            f"&Sec-MS-GEC-Version={generate_sec_ms_gec_version()}"
+            f"&ConnectionId={connect_id()}",
             compress=15,
             proxy=self.proxy,
             headers=WSS_HEADERS,
