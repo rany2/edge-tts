@@ -10,6 +10,7 @@ import aiohttp
 import certifi
 
 from .constants import VOICE_HEADERS, VOICE_LIST
+from .drm import generate_sec_ms_gec_token, generate_sec_ms_gec_version
 
 
 async def list_voices(*, proxy: Optional[str] = None) -> Any:
@@ -25,7 +26,8 @@ async def list_voices(*, proxy: Optional[str] = None) -> Any:
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     async with aiohttp.ClientSession(trust_env=True) as session:
         async with session.get(
-            VOICE_LIST,
+            f"{VOICE_LIST}&Sec-MS-GEC={generate_sec_ms_gec_token()}"
+            f"&Sec-MS-GEC-Version={generate_sec_ms_gec_version()}",
             headers=VOICE_HEADERS,
             proxy=proxy,
             ssl=ssl_ctx,
