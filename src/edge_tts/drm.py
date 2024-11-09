@@ -1,7 +1,7 @@
 """This module contains functions for generating the Sec-MS-GEC and Sec-MS-GEC-Version tokens."""
 
-from datetime import datetime, timezone
 import hashlib
+from datetime import datetime, timezone
 
 from .constants import CHROMIUM_FULL_VERSION, TRUSTED_CLIENT_TOKEN
 
