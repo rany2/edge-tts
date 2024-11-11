@@ -9,8 +9,36 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 import certifi
 
-from .constants import VOICE_HEADERS, VOICE_LIST
-from .drm import generate_sec_ms_gec_token, generate_sec_ms_gec_version
+from .constants import SEC_MS_GEC_VERSION, VOICE_HEADERS, VOICE_LIST
+from .drm import DRM
+
+
+async def __list_voices(
+    session: aiohttp.ClientSession, ssl_ctx: ssl.SSLContext, proxy: Optional[str]
+) -> Any:
+    """
+    Private function that makes the request to the voice list URL and parses the
+    JSON response. This function is used by list_voices() and makes it easier to
+    handle client response errors related to clock skew.
+
+    Args:
+        session (aiohttp.ClientSession): The aiohttp session to use for the request.
+        ssl_ctx (ssl.SSLContext): The SSL context to use for the request.
+        proxy (Optional[str]): The proxy to use for the request.
+
+    Returns:
+        dict: A dictionary of voice attributes.
+    """
+    async with session.get(
+        f"{VOICE_LIST}&Sec-MS-GEC={DRM.generate_sec_ms_gec()}"
+        f"&Sec-MS-GEC-Version={SEC_MS_GEC_VERSION}",
+        headers=VOICE_HEADERS,
+        proxy=proxy,
+        ssl=ssl_ctx,
+        raise_for_status=True,
+    ) as url:
+        data = json.loads(await url.text())
+    return data
 
 
 async def list_voices(*, proxy: Optional[str] = None) -> Any:
@@ -20,19 +48,22 @@ async def list_voices(*, proxy: Optional[str] = None) -> Any:
     This pulls data from the URL used by Microsoft Edge to return a list of
     all available voices.
 
+    Args:
+        proxy (Optional[str]): The proxy to use for the request.
+
     Returns:
         dict: A dictionary of voice attributes.
     """
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     async with aiohttp.ClientSession(trust_env=True) as session:
-        async with session.get(
-            f"{VOICE_LIST}&Sec-MS-GEC={generate_sec_ms_gec_token()}"
-            f"&Sec-MS-GEC-Version={generate_sec_ms_gec_version()}",
-            headers=VOICE_HEADERS,
-            proxy=proxy,
-            ssl=ssl_ctx,
-        ) as url:
-            data = json.loads(await url.text())
+        try:
+            data = await __list_voices(session, ssl_ctx, proxy)
+        except aiohttp.ClientResponseError as e:
+            if e.status != 403:
+                raise
+
+            DRM.handle_client_response_error(e)
+            data = await __list_voices(session, ssl_ctx, proxy)
     return data
 
 

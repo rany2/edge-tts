@@ -4,14 +4,16 @@ __init__ for edge_tts
 
 from . import exceptions
 from .communicate import Communicate
-from .list_voices import VoicesManager, list_voices
 from .submaker import SubMaker
-from .version import __version__
+from .version import __version__, __version_info__
+from .voices import VoicesManager, list_voices
 
 __all__ = [
     "Communicate",
     "SubMaker",
-    "VoicesManager",
     "exceptions",
+    "__version__",
+    "__version_info__",
+    "VoicesManager",
     "list_voices",
 ]
