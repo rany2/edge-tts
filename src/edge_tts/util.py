@@ -6,6 +6,8 @@ import sys
 from io import TextIOWrapper
 from typing import Any, TextIO, Union
 
+from tabulate import tabulate
+
 from . import Communicate, SubMaker, list_voices
 
 
@@ -13,22 +15,17 @@ async def _print_voices(*, proxy: str) -> None:
     """Print all available voices."""
     voices = await list_voices(proxy=proxy)
     voices = sorted(voices, key=lambda voice: voice["ShortName"])
-    for idx, voice in enumerate(voices):
-        if idx != 0:
-            print()
-
-        for key in voice.keys():
-            if key in (
-                "SuggestedCodec",
-                "FriendlyName",
-                "Status",
-                "VoiceTag",
-                "Name",
-                "Locale",
-            ):
-                continue
-            pretty_key_name = key if key != "ShortName" else "Name"
-            print(f"{pretty_key_name}: {voice[key]}")
+    headers = ["Name", "Gender", "ContentCategories", "VoicePersonalities"]
+    table = [
+        [
+            voice["ShortName"],
+            voice["Gender"],
+            ", ".join(voice["VoiceTag"]["ContentCategories"]),
+            ", ".join(voice["VoiceTag"]["VoicePersonalities"]),
+        ]
+        for voice in voices
+    ]
+    print(tabulate(table, headers))
 
 
 async def _run_tts(args: Any) -> None:
