@@ -238,7 +238,7 @@ def calc_max_mesg_size(tts_config: TTSConfig) -> int:
 
 class Communicate:
     """
-    Class for communicating with the service.
+    Communicate with the service.
     """
 
     def __init__(
@@ -249,17 +249,11 @@ class Communicate:
         rate: str = "+0%",
         volume: str = "+0%",
         pitch: str = "+0Hz",
+        connector: Optional[aiohttp.BaseConnector] = None,
         proxy: Optional[str] = None,
-        connect_timeout: int = 10,
-        receive_timeout: int = 60,
+        connect_timeout: Optional[int] = 10,
+        receive_timeout: Optional[int] = 60,
     ):
-        """
-        Initializes the Communicate class.
-
-        Raises:
-            ValueError: If the voice is not valid.
-        """
-
         # Validate TTS settings and store the TTSConfig object.
         self.tts_config = TTSConfig(voice, rate, volume, pitch)
 
@@ -289,6 +283,11 @@ class Communicate:
             sock_connect=connect_timeout,
             sock_read=receive_timeout,
         )
+
+        # Validate the connector parameter.
+        if connector is not None and not isinstance(connector, aiohttp.BaseConnector):
+            raise TypeError("connector must be aiohttp.BaseConnector")
+        self.connector: Optional[aiohttp.BaseConnector] = connector
 
         # Store current state of TTS.
         self.state: Dict[str, Any] = {
@@ -351,6 +350,7 @@ class Communicate:
         # Create a new connection to the service.
         ssl_ctx = ssl.create_default_context(cafile=certifi.where())
         async with aiohttp.ClientSession(
+            connector=self.connector,
             trust_env=True,
             timeout=self.session_timeout,
         ) as session, session.ws_connect(
