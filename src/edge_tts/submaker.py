@@ -15,7 +15,7 @@ class SubMaker:
 
     def add_cue(self, timestamp: Tuple[float, float], text: str) -> None:
         """
-        Add a subtitle part to the SubMaker object.
+        Add a cue to the SubMaker object.
 
         Args:
             timestamp (tuple): The offset and duration of the subtitle.

@@ -55,7 +55,9 @@ async def __list_voices(
     return data
 
 
-async def list_voices(*, proxy: Optional[str] = None) -> List[Voice]:
+async def list_voices(
+    *, connector: Optional[aiohttp.BaseConnector] = None, proxy: Optional[str] = None
+) -> List[Voice]:
     """
     List all available voices and their attributes.
 
@@ -63,13 +65,14 @@ async def list_voices(*, proxy: Optional[str] = None) -> List[Voice]:
     all available voices.
 
     Args:
+        connector (Optional[aiohttp.BaseConnector]): The connector to use for the request.
         proxy (Optional[str]): The proxy to use for the request.
 
     Returns:
         List[Voice]: A list of voices and their attributes.
     """
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
-    async with aiohttp.ClientSession(trust_env=True) as session:
+    async with aiohttp.ClientSession(connector=connector, trust_env=True) as session:
         try:
             data = await __list_voices(session, ssl_ctx, proxy)
         except aiohttp.ClientResponseError as e:
