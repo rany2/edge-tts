@@ -117,9 +117,7 @@ async def amain() -> None:
         sys.exit(0)
 
     if args.file is not None:
-        # we need to use sys.stdin.read() because some devices
-        # like Windows and Termux don't have a /dev/stdin.
-        if args.file == "/dev/stdin":
+        if args.file in ("-", "/dev/stdin"):
             args.text = sys.stdin.read()
         else:
             with open(args.file, "r", encoding="utf-8") as file:
