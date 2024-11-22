@@ -61,7 +61,7 @@ async def _run_tts(args: Any) -> None:
             if chunk["type"] == "audio":
                 audio_file.write(chunk["data"])
             elif chunk["type"] == "WordBoundary":
-                subs.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
+                subs.add_cue((chunk["offset"], chunk["duration"]), chunk["text"])
 
     sub_file: Union[TextIOWrapper, TextIO] = (
         open(args.write_subtitles, "w", encoding="utf-8")
@@ -69,7 +69,7 @@ async def _run_tts(args: Any) -> None:
         else sys.stderr
     )
     with sub_file:
-        sub_file.write(subs.generate_subs(args.words_in_cue))
+        sub_file.write(subs.get_srt())
 
 
 async def amain() -> None:
@@ -93,12 +93,6 @@ async def amain() -> None:
     parser.add_argument("--rate", help="set TTS rate. Default +0%%.", default="+0%")
     parser.add_argument("--volume", help="set TTS volume. Default +0%%.", default="+0%")
     parser.add_argument("--pitch", help="set TTS pitch. Default +0Hz.", default="+0Hz")
-    parser.add_argument(
-        "--words-in-cue",
-        help="number of words in a subtitle cue. Default: 10.",
-        default=10,
-        type=float,
-    )
     parser.add_argument(
         "--write-media", help="send media output to file instead of stdout"
     )

@@ -14,7 +14,7 @@ import edge_tts
 TEXT = "Hello World!"
 VOICE = "en-GB-SoniaNeural"
 OUTPUT_FILE = "test.mp3"
-WEBVTT_FILE = "test.vtt"
+SRT_FILE = "test.srt"
 
 
 async def amain() -> None:
@@ -26,10 +26,10 @@ async def amain() -> None:
             if chunk["type"] == "audio":
                 file.write(chunk["data"])
             elif chunk["type"] == "WordBoundary":
-                submaker.create_sub((chunk["offset"], chunk["duration"]), chunk["text"])
+                submaker.add_cue((chunk["offset"], chunk["duration"]), chunk["text"])
 
-    with open(WEBVTT_FILE, "w", encoding="utf-8") as file:
-        file.write(submaker.generate_subs())
+    with open(SRT_FILE, "w", encoding="utf-8") as file:
+        file.write(submaker.get_srt())
 
 
 if __name__ == "__main__":
