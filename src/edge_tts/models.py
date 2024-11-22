@@ -1,4 +1,5 @@
-"""Models for the Edge TTS module."""
+"""This module contains the TTSConfig dataclass, which represents the
+internal TTS configuration for edge-tts's Communicate class."""
 
 import re
 from dataclasses import dataclass
@@ -7,7 +8,7 @@ from dataclasses import dataclass
 @dataclass
 class TTSConfig:
     """
-    Represents the internal TTS configuration for Edge TTS's communicate class.
+    Represents the internal TTS configuration for edge-tts's Communicate class.
     """
 
     voice: str

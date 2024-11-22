@@ -1,6 +1,5 @@
-"""
-list_voices package for edge_tts.
-"""
+"""This module contains functions to list all available voices and a class to find the
+correct voice based on their attributes."""
 
 import json
 import ssl

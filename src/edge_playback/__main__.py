@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
-
-"""
-Playback TTS with subtitles using edge-tts and mpv.
-"""
+"""Main entrypoint for the edge-playback package."""
 
 import os
 import subprocess

@@ -1,6 +1,4 @@
-"""
-Constants for the Edge TTS project.
-"""
+"""Constants for the edge_tts package."""
 
 BASE_URL = "speech.platform.bing.com/consumer/speech/synthesize/readaloud"
 TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"

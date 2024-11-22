@@ -1,6 +1,4 @@
-"""
-__main__ for edge_tts.
-"""
+"""Main entrypoint for the edge-tts package."""
 
 from .util import main
 
