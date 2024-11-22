@@ -1,6 +1,4 @@
-"""
-Main package.
-"""
+"""Utility functions for the command line interface. Used by the main module."""
 
 import argparse
 import asyncio

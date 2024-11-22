@@ -1,9 +1,4 @@
-"""
-SubMaker package for the Edge TTS project.
-
-SubMaker is a package that makes the process of creating subtitles with
-information provided by the service easier.
-"""
+"""SubMaker module is used to generate subtitles from WordBoundary events."""
 
 import math
 from typing import List, Tuple
@@ -37,20 +32,23 @@ def mktimestamp(time_unit: float) -> str:
 
 class SubMaker:
     """
-    SubMaker class
+    SubMaker is used to generate subtitles from WordBoundary messages.
     """
 
     def __init__(self) -> None:
         """
-        SubMaker constructor.
+        SubMaker constructor initializes the list of subtitles and the list of offsets.
+
+        Returns:
+            None
         """
         self.offset: List[Tuple[float, float]] = []
         self.subs: List[str] = []
 
     def create_sub(self, timestamp: Tuple[float, float], text: str) -> None:
         """
-        create_sub creates a subtitle with the given timestamp and text
-        and adds it to the list of subtitles
+        create_sub creates a subtitle from the given timestamp and text,
+        and appends it to the list of subtitles.
 
         Args:
             timestamp (tuple): The offset and duration of the subtitle.

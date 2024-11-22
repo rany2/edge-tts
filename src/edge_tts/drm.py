@@ -1,4 +1,6 @@
-"""DRM module for handling DRM operations with clock skew correction."""
+"""DRM module is used to handle DRM operations with clock skew correction.
+Currently the only DRM operation is generating the Sec-MS-GEC token value
+used in all API requests to Microsoft Edge's online text-to-speech service."""
 
 import hashlib
 from datetime import datetime as dt
@@ -40,10 +42,10 @@ class DRM:
     @staticmethod
     def get_unix_timestamp() -> float:
         """
-        Gets the current timestamp in Windows file time format with clock skew correction.
+        Gets the current timestamp in Unix format with clock skew correction.
 
         Returns:
-            float: The current timestamp in Windows file time format.
+            float: The current timestamp in Unix format with clock skew correction.
         """
         return dt.now(tz.utc).timestamp() + DRM.clock_skew_seconds
 
@@ -101,7 +103,7 @@ class DRM:
         """
         Generates the Sec-MS-GEC token value.
 
-        This function generates a token value based on the current time in Windows file time format,
+        This function generates a token value based on the current time in Windows file time format
         adjusted for clock skew, and rounded down to the nearest 5 minutes. The token is then hashed
         using SHA256 and returned as an uppercased hex digest.
 
@@ -112,7 +114,7 @@ class DRM:
             https://github.com/rany2/edge-tts/issues/290#issuecomment-2464956570
         """
 
-        # Get the current timestamp in Windows file time format with clock skew correction
+        # Get the current timestamp in Unix format with clock skew correction
         ticks = DRM.get_unix_timestamp()
 
         # Switch to Windows file time epoch (1601-01-01 00:00:00 UTC)
