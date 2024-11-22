@@ -244,7 +244,7 @@ class Communicate:
     def __init__(
         self,
         text: str,
-        voice: str = "Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural)",
+        voice: str = "en-US-AriaNeural",
         *,
         rate: str = "+0%",
         volume: str = "+0%",
