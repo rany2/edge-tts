@@ -319,32 +319,19 @@ class Communicate:
 
     async def __stream(self) -> AsyncGenerator[TTSChunk, None]:
         async def send_command_request() -> None:
-            """Sends the request to the service."""
-
-            # Prepare the request to be sent to the service.
-            #
-            # Note sentenceBoundaryEnabled and wordBoundaryEnabled are actually supposed
-            # to be booleans, but Edge Browser seems to send them as strings.
-            #
-            # This is a bug in Edge as Azure Cognitive Services actually sends them as
-            # bool and not string. For now I will send them as bool unless it causes
-            # any problems.
-            #
-            # Also pay close attention to double { } in request (escape for f-string).
+            """Sends the command request to the service."""
             await websocket.send_str(
                 f"X-Timestamp:{date_to_string()}\r\n"
                 "Content-Type:application/json; charset=utf-8\r\n"
                 "Path:speech.config\r\n\r\n"
                 '{"context":{"synthesis":{"audio":{"metadataoptions":{'
-                '"sentenceBoundaryEnabled":false,"wordBoundaryEnabled":true},'
+                '"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},'
                 '"outputFormat":"audio-24khz-48kbitrate-mono-mp3"'
                 "}}}}\r\n"
             )
 
         async def send_ssml_request() -> None:
             """Sends the SSML request to the service."""
-
-            # Send the request to the service.
             await websocket.send_str(
                 ssml_headers_plus_data(
                     connect_id(),
@@ -375,10 +362,8 @@ class Communicate:
             headers=WSS_HEADERS,
             ssl=ssl_ctx,
         ) as websocket:
-            # Send the request to the service.
             await send_command_request()
 
-            # Send the SSML request to the service.
             await send_ssml_request()
 
             async for received in websocket:
