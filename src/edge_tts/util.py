@@ -3,8 +3,7 @@
 import argparse
 import asyncio
 import sys
-from io import TextIOWrapper
-from typing import Any, TextIO, Union
+from typing import Any, Optional, TextIO
 
 from tabulate import tabulate
 
@@ -45,31 +44,42 @@ async def _run_tts(args: Any) -> None:
         print("\nOperation canceled.", file=sys.stderr)
         return
 
-    tts: Communicate = Communicate(
+    communicate = Communicate(
         args.text,
         args.voice,
-        proxy=args.proxy,
         rate=args.rate,
         volume=args.volume,
         pitch=args.pitch,
+        proxy=args.proxy,
     )
-    subs: SubMaker = SubMaker()
-    with (
-        open(args.write_media, "wb") if args.write_media else sys.stdout.buffer
-    ) as audio_file:
-        async for chunk in tts.stream():
+    submaker = SubMaker()
+    try:
+        audio_file = (
+            open(args.write_media, "wb")
+            if args.write_media is not None and args.write_media != "-"
+            else sys.stdout.buffer
+        )
+        sub_file: Optional[TextIO] = (
+            open(args.write_subtitles, "w", encoding="utf-8")
+            if args.write_subtitles is not None and args.write_subtitles != "-"
+            else None
+        )
+        if sub_file is None and args.write_subtitles == "-":
+            sub_file = sys.stderr
+
+        async for chunk in communicate.stream():
             if chunk["type"] == "audio":
                 audio_file.write(chunk["data"])
             elif chunk["type"] == "WordBoundary":
-                subs.add_cue((chunk["offset"], chunk["duration"]), chunk["text"])
+                submaker.feed(chunk)
 
-    sub_file: Union[TextIOWrapper, TextIO] = (
-        open(args.write_subtitles, "w", encoding="utf-8")
-        if args.write_subtitles
-        else sys.stderr
-    )
-    with sub_file:
-        sub_file.write(subs.get_srt())
+        if sub_file is not None:
+            sub_file.write(submaker.get_srt())
+    finally:
+        if audio_file is not sys.stdout.buffer:
+            audio_file.close()
+        if sub_file is not None and sub_file is not sys.stderr:
+            sub_file.close()
 
 
 async def amain() -> None:
