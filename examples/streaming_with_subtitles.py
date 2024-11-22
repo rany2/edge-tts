@@ -26,7 +26,7 @@ async def amain() -> None:
             if chunk["type"] == "audio":
                 file.write(chunk["data"])
             elif chunk["type"] == "WordBoundary":
-                submaker.add_cue((chunk["offset"], chunk["duration"]), chunk["text"])
+                submaker.feed(chunk)
 
     with open(SRT_FILE, "w", encoding="utf-8") as file:
         file.write(submaker.get_srt())

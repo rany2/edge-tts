@@ -1,8 +1,10 @@
 """SubMaker module is used to generate subtitles from WordBoundary events."""
 
-from typing import List, Tuple
+from typing import List
 
 import srt  # type: ignore
+
+from .typing import TTSChunk
 
 
 class SubMaker:
@@ -13,23 +15,25 @@ class SubMaker:
     def __init__(self) -> None:
         self.cues: List[srt.Subtitle] = []  # type: ignore
 
-    def add_cue(self, timestamp: Tuple[float, float], text: str) -> None:
+    def feed(self, msg: TTSChunk) -> None:
         """
-        Add a cue to the SubMaker object.
+        Feed a WordBoundary message to the SubMaker object.
 
         Args:
-            timestamp (tuple): The offset and duration of the subtitle.
-            text (str): The text of the subtitle.
+            msg (dict): The WordBoundary message.
 
         Returns:
             None
         """
+        if msg["type"] != "WordBoundary":
+            raise ValueError("Invalid message type, expected 'WordBoundary'")
+
         self.cues.append(
             srt.Subtitle(
                 index=len(self.cues) + 1,
-                start=srt.timedelta(microseconds=timestamp[0] / 10),
-                end=srt.timedelta(microseconds=sum(timestamp) / 10),
-                content=text,
+                start=srt.timedelta(microseconds=msg["duration"] / 10),
+                end=srt.timedelta(microseconds=(msg["duration"] + msg["offset"]) / 10),
+                content=msg["text"],
             )
         )
 
@@ -41,3 +45,6 @@ class SubMaker:
             str: The SRT formatted subtitles.
         """
         return srt.compose(self.cues)  # type: ignore
+
+    def __str__(self) -> str:
+        return self.get_srt()
