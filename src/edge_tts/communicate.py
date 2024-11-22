@@ -35,6 +35,7 @@ from .exceptions import (
     WebSocketError,
 )
 from .models import TTSConfig
+from .typing import TTSChunk
 
 
 def get_headers_and_data(
@@ -297,7 +298,7 @@ class Communicate:
             "stream_was_called": False,
         }
 
-    def __parse_metadata(self, data: bytes) -> Dict[str, Any]:
+    def __parse_metadata(self, data: bytes) -> TTSChunk:
         for meta_obj in json.loads(data)["Metadata"]:
             meta_type = meta_obj["Type"]
             if meta_type == "WordBoundary":
@@ -316,7 +317,7 @@ class Communicate:
             raise UnknownResponse(f"Unknown metadata type: {meta_type}")
         raise UnexpectedResponse("No WordBoundary metadata found")
 
-    async def __stream(self) -> AsyncGenerator[Dict[str, Any], None]:
+    async def __stream(self) -> AsyncGenerator[TTSChunk, None]:
         async def send_command_request() -> None:
             """Sends the request to the service."""
 
@@ -479,7 +480,7 @@ class Communicate:
 
     async def stream(
         self,
-    ) -> AsyncGenerator[Dict[str, Any], None]:
+    ) -> AsyncGenerator[TTSChunk, None]:
         """
         Streams audio and metadata from the service.
 

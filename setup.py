@@ -6,5 +6,6 @@ setup(
     install_requires=[
         "aiohttp>=3.8.0",
         "certifi>=2023.11.17",
+        "typing-extensions>=4.1.0",
     ],
 )

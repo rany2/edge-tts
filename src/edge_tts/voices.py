@@ -3,18 +3,19 @@ correct voice based on their attributes."""
 
 import json
 import ssl
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import aiohttp
 import certifi
 
 from .constants import SEC_MS_GEC_VERSION, VOICE_HEADERS, VOICE_LIST
 from .drm import DRM
+from .typing import Voice, VoiceManagerVoice
 
 
 async def __list_voices(
     session: aiohttp.ClientSession, ssl_ctx: ssl.SSLContext, proxy: Optional[str]
-) -> Any:
+) -> List[Voice]:
     """
     Private function that makes the request to the voice list URL and parses the
     JSON response. This function is used by list_voices() and makes it easier to
@@ -26,7 +27,7 @@ async def __list_voices(
         proxy (Optional[str]): The proxy to use for the request.
 
     Returns:
-        dict: A dictionary of voice attributes.
+        List[Voice]: A list of voices and their attributes.
     """
     async with session.get(
         f"{VOICE_LIST}&Sec-MS-GEC={DRM.generate_sec_ms_gec()}"
@@ -36,11 +37,25 @@ async def __list_voices(
         ssl=ssl_ctx,
         raise_for_status=True,
     ) as url:
-        data = json.loads(await url.text())
+        data: List[Voice] = json.loads(await url.text())
+
+    for voice in data:
+        # Remove leading and trailing whitespace from categories and personalities.
+        # This has only happened in one case with the zh-CN-YunjianNeural voice
+        # where there was a leading space in one of the categories.
+        voice["VoiceTag"]["ContentCategories"] = [
+            category.strip()  # type: ignore
+            for category in voice["VoiceTag"]["ContentCategories"]
+        ]
+        voice["VoiceTag"]["VoicePersonalities"] = [
+            personality.strip()  # type: ignore
+            for personality in voice["VoiceTag"]["VoicePersonalities"]
+        ]
+
     return data
 
 
-async def list_voices(*, proxy: Optional[str] = None) -> Any:
+async def list_voices(*, proxy: Optional[str] = None) -> List[Voice]:
     """
     List all available voices and their attributes.
 
@@ -51,7 +66,7 @@ async def list_voices(*, proxy: Optional[str] = None) -> Any:
         proxy (Optional[str]): The proxy to use for the request.
 
     Returns:
-        dict: A dictionary of voice attributes.
+        List[Voice]: A list of voices and their attributes.
     """
     ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     async with aiohttp.ClientSession(trust_env=True) as session:
@@ -72,26 +87,23 @@ class VoicesManager:
     """
 
     def __init__(self) -> None:
-        self.voices: List[Dict[str, Any]] = []
+        self.voices: List[VoiceManagerVoice] = []
         self.called_create: bool = False
 
     @classmethod
-    async def create(
-        cls: Any, custom_voices: Optional[List[Dict[str, Any]]] = None
-    ) -> Any:
+    async def create(cls: Any, custom_voices: Optional[List[Voice]] = None) -> Any:
         """
         Creates a VoicesManager object and populates it with all available voices.
         """
         self = VoicesManager()
-        self.voices = await list_voices() if custom_voices is None else custom_voices
+        voices = await list_voices() if custom_voices is None else custom_voices
         self.voices = [
-            {**voice, **{"Language": voice["Locale"].split("-")[0]}}
-            for voice in self.voices
+            {**voice, "Language": voice["Locale"].split("-")[0]} for voice in voices
         ]
         self.called_create = True
         return self
 
-    def find(self, **kwargs: Any) -> List[Dict[str, Any]]:
+    def find(self, **kwargs: Any) -> List[VoiceManagerVoice]:
         """
         Finds all matching voices based on the provided attributes.
         """
