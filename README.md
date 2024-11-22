@@ -18,7 +18,7 @@ If you only want to use the `edge-tts` and `edge-playback` commands, it would be
 
 If you want to use the `edge-tts` command, you can simply run it with the following command:
 
-    $ edge-tts --text "Hello, world!" --write-media hello.mp3 --write-subtitles hello.vtt
+    $ edge-tts --text "Hello, world!" --write-media hello.mp3 --write-subtitles hello.srt
 
 If you wish to play it back immediately with subtitles, you could use the `edge-playback` command:
 
@@ -48,7 +48,7 @@ You can change the voice used by the text-to-speech service by using the `--voic
     ar-EG-SalmaNeural                  Female    General                Friendly, Positive
     ...
 
-    $ edge-tts --voice ar-EG-SalmaNeural --text "مرحبا كيف حالك؟" --write-media hello_in_arabic.mp3 --write-subtitles hello_in_arabic.vtt
+    $ edge-tts --voice ar-EG-SalmaNeural --text "مرحبا كيف حالك؟" --write-media hello_in_arabic.mp3 --write-subtitles hello_in_arabic.srt
 
 ### Custom SSML
 
@@ -58,9 +58,9 @@ Support for custom SSML was removed because Microsoft prevents the use of any SS
 
 You can change the rate, volume and pitch of the generated speech by using the `--rate`, `--volume` and `--pitch` options. When using a negative value, you will need to use `--[option]=-50%` instead of `--[option] -50%` to avoid the option being interpreted as a command line option.
 
-    $ edge-tts --rate=-50% --text "Hello, world!" --write-media hello_with_rate_lowered.mp3 --write-subtitles hello_with_rate_lowered.vtt
-    $ edge-tts --volume=-50% --text "Hello, world!" --write-media hello_with_volume_lowered.mp3 --write-subtitles hello_with_volume_lowered.vtt
-    $ edge-tts --pitch=-50Hz --text "Hello, world!" --write-media hello_with_pitch_lowered.mp3 --write-subtitles hello_with_pitch_lowered.vtt
+    $ edge-tts --rate=-50% --text "Hello, world!" --write-media hello_with_rate_lowered.mp3 --write-subtitles hello_with_rate_lowered.srt
+    $ edge-tts --volume=-50% --text "Hello, world!" --write-media hello_with_volume_lowered.mp3 --write-subtitles hello_with_volume_lowered.srt
+    $ edge-tts --pitch=-50Hz --text "Hello, world!" --write-media hello_with_pitch_lowered.mp3 --write-subtitles hello_with_pitch_lowered.srt
 
 ## Python module
 

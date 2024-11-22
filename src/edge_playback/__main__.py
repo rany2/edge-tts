@@ -25,7 +25,7 @@ def _main() -> None:
 
     keep = os.environ.get("EDGE_PLAYBACK_KEEP_TEMP") is not None
     mp3_fname = os.environ.get("EDGE_PLAYBACK_MP3_FILE")
-    vtt_fname = os.environ.get("EDGE_PLAYBACK_VTT_FILE")
+    srt_fname = os.environ.get("EDGE_PLAYBACK_SRT_FILE")
     media, subtitle = None, None
     try:
         if not mp3_fname:
@@ -33,18 +33,18 @@ def _main() -> None:
             media.close()
             mp3_fname = media.name
 
-        if not vtt_fname:
-            subtitle = tempfile.NamedTemporaryFile(suffix=".vtt", delete=False)
+        if not srt_fname:
+            subtitle = tempfile.NamedTemporaryFile(suffix=".srt", delete=False)
             subtitle.close()
-            vtt_fname = subtitle.name
+            srt_fname = subtitle.name
 
         print(f"Media file: {mp3_fname}")
-        print(f"Subtitle file: {vtt_fname}\n")
+        print(f"Subtitle file: {srt_fname}\n")
         with subprocess.Popen(
             [
                 "edge-tts",
                 f"--write-media={mp3_fname}",
-                f"--write-subtitles={vtt_fname}",
+                f"--write-subtitles={srt_fname}",
             ]
             + sys.argv[1:]
         ) as process:
@@ -53,19 +53,19 @@ def _main() -> None:
         with subprocess.Popen(
             [
                 "mpv",
-                f"--sub-file={vtt_fname}",
+                f"--sub-file={srt_fname}",
                 mp3_fname,
             ]
         ) as process:
             process.communicate()
     finally:
         if keep:
-            print(f"\nKeeping temporary files: {mp3_fname} and {vtt_fname}")
+            print(f"\nKeeping temporary files: {mp3_fname} and {srt_fname}")
         else:
             if mp3_fname is not None and os.path.exists(mp3_fname):
                 os.unlink(mp3_fname)
-            if vtt_fname is not None and os.path.exists(vtt_fname):
-                os.unlink(vtt_fname)
+            if srt_fname is not None and os.path.exists(srt_fname):
+                os.unlink(srt_fname)
 
 
 if __name__ == "__main__":
