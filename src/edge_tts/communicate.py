@@ -11,7 +11,6 @@ from contextlib import nullcontext
 from io import TextIOWrapper
 from queue import Queue
 from typing import (
-    Any,
     AsyncGenerator,
     ContextManager,
     Dict,
@@ -26,7 +25,8 @@ from xml.sax.saxutils import escape
 import aiohttp
 import certifi
 
-from .constants import SEC_MS_GEC_VERSION, WSS_HEADERS, WSS_URL
+from .constants import DEFAULT_VOICE, SEC_MS_GEC_VERSION, WSS_HEADERS, WSS_URL
+from .data_classes import TTSConfig
 from .drm import DRM
 from .exceptions import (
     NoAudioReceived,
@@ -34,8 +34,7 @@ from .exceptions import (
     UnknownResponse,
     WebSocketError,
 )
-from .models import TTSConfig
-from .typing import TTSChunk
+from .typing import CommunicateState, TTSChunk
 
 
 def get_headers_and_data(
@@ -109,7 +108,7 @@ def split_text_by_byte_length(
     text will be inside of an XML tag.
 
     Args:
-        text (str or bytes): The string to be split.
+        text (str or bytes): The string to be split. If bytes, it must be UTF-8 encoded.
         byte_length (int): The maximum byte length of each string in the list.
 
     Yield:
@@ -166,12 +165,9 @@ def mkssml(tc: TTSConfig, escaped_text: Union[str, bytes]) -> str:
     Returns:
         str: The SSML string.
     """
-
-    # If the text is bytes, convert it to a string.
     if isinstance(escaped_text, bytes):
         escaped_text = escaped_text.decode("utf-8")
 
-    # Return the SSML string.
     return (
         "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>"
         f"<voice name='{tc.voice}'>"
@@ -244,7 +240,7 @@ class Communicate:
     def __init__(
         self,
         text: str,
-        voice: str = "en-US-EmmaMultilingualNeural",
+        voice: str = DEFAULT_VOICE,
         *,
         rate: str = "+0%",
         volume: str = "+0%",
@@ -290,8 +286,8 @@ class Communicate:
         self.connector: Optional[aiohttp.BaseConnector] = connector
 
         # Store current state of TTS.
-        self.state: Dict[str, Any] = {
-            "partial_text": None,
+        self.state: CommunicateState = {
+            "partial_text": b"",
             "offset_compensation": 0,
             "last_duration_offset": 0,
             "stream_was_called": False,

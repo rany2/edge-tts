@@ -78,15 +78,24 @@ class Voice(TypedDict):
     VoiceTag: VoiceTag
 
 
-class VoiceManagerVoice(Voice):
-    """Voice data for VoiceManager."""
+class VoicesManagerVoice(Voice):
+    """Voice data for VoicesManager."""
 
     Language: str
 
 
-class VoiceManagerFind(TypedDict):
-    """Voice data for VoiceManager.find()."""
+class VoicesManagerFind(TypedDict):
+    """Voice data for VoicesManager.find()."""
 
     Gender: NotRequired[Literal["Female", "Male"]]
     Locale: NotRequired[str]
     Language: NotRequired[str]
+
+
+class CommunicateState(TypedDict):
+    """Communicate state data."""
+
+    partial_text: bytes
+    offset_compensation: float
+    last_duration_offset: float
+    stream_was_called: bool
