@@ -31,8 +31,8 @@ class SubMaker:
         self.cues.append(
             srt.Subtitle(
                 index=len(self.cues) + 1,
-                start=srt.timedelta(microseconds=msg["duration"] / 10),
-                end=srt.timedelta(microseconds=(msg["duration"] + msg["offset"]) / 10),
+                start=srt.timedelta(microseconds=msg["offset"] / 10),
+                end=srt.timedelta(microseconds=(msg["offset"] + msg["duration"]) / 10),
                 content=msg["text"],
             )
         )
