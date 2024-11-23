@@ -7,10 +7,11 @@ from typing import Any, List, Optional
 
 import aiohttp
 import certifi
+from typing_extensions import Unpack
 
 from .constants import SEC_MS_GEC_VERSION, VOICE_HEADERS, VOICE_LIST
 from .drm import DRM
-from .typing import Voice, VoiceManagerVoice
+from .typing import Voice, VoiceManagerFind, VoiceManagerVoice
 
 
 async def __list_voices(
@@ -94,7 +95,9 @@ class VoicesManager:
         self.called_create: bool = False
 
     @classmethod
-    async def create(cls: Any, custom_voices: Optional[List[Voice]] = None) -> Any:
+    async def create(
+        cls: Any, custom_voices: Optional[List[Voice]] = None
+    ) -> "VoicesManager":
         """
         Creates a VoicesManager object and populates it with all available voices.
         """
@@ -106,7 +109,7 @@ class VoicesManager:
         self.called_create = True
         return self
 
-    def find(self, **kwargs: Any) -> List[VoiceManagerVoice]:
+    def find(self, **kwargs: Unpack[VoiceManagerFind]) -> List[VoiceManagerVoice]:
         """
         Finds all matching voices based on the provided attributes.
         """

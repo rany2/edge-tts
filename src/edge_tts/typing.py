@@ -82,3 +82,11 @@ class VoiceManagerVoice(Voice):
     """Voice data for VoiceManager."""
 
     Language: str
+
+
+class VoiceManagerFind(TypedDict):
+    """Voice data for VoiceManager.find()."""
+
+    Gender: NotRequired[Literal["Female", "Male"]]
+    Locale: NotRequired[str]
+    Language: NotRequired[str]
