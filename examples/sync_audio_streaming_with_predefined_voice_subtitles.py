@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 
-"""
-Streaming TTS example with subtitles.
-
-This example is similar to the example basic_audio_streaming.py, but it shows
-WordBoundary events to create subtitles using SubMaker.
-"""
-
-import asyncio
+"""Sync variant of the async .stream() method to
+get audio chunks and feed them to SubMaker to
+generate subtitles"""
 
 import edge_tts
 
@@ -17,12 +12,12 @@ OUTPUT_FILE = "test.mp3"
 SRT_FILE = "test.srt"
 
 
-async def amain() -> None:
+def main() -> None:
     """Main function"""
     communicate = edge_tts.Communicate(TEXT, VOICE)
     submaker = edge_tts.SubMaker()
     with open(OUTPUT_FILE, "wb") as file:
-        async for chunk in communicate.stream():
+        for chunk in communicate.stream_sync():
             if chunk["type"] == "audio":
                 file.write(chunk["data"])
             elif chunk["type"] == "WordBoundary":
@@ -33,4 +28,4 @@ async def amain() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(amain())
+    main()

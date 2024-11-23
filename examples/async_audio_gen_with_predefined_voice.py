@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-"""
-Basic example of edge_tts usage in synchronous function
-"""
+"""Simple example to generate audio with preset voice using async/await"""
+
+import asyncio
 
 import edge_tts
 
@@ -11,11 +11,11 @@ VOICE = "en-GB-SoniaNeural"
 OUTPUT_FILE = "test.mp3"
 
 
-def main() -> None:
+async def amain() -> None:
     """Main function"""
     communicate = edge_tts.Communicate(TEXT, VOICE)
-    communicate.save_sync(OUTPUT_FILE)
+    await communicate.save(OUTPUT_FILE)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(amain())

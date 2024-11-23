@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-"""
-Example of dynamic voice selection using VoicesManager.
-"""
+"""Simple example to generate an audio file with randomized
+dynamic voice selection based on attributes such as Gender,
+Language, or Locale."""
 
 import asyncio
 import random

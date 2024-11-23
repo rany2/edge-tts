@@ -518,7 +518,7 @@ class Communicate:
                     json.dump(message, metadata)
                     metadata.write("\n")
 
-    def stream_sync(self) -> Generator[Dict[str, Any], None, None]:
+    def stream_sync(self) -> Generator[TTSChunk, None, None]:
         """Synchronous interface for async stream method"""
 
         def fetch_async_items(queue: Queue) -> None:  # type: ignore
