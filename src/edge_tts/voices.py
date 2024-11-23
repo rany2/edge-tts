@@ -3,7 +3,7 @@ correct voice based on their attributes."""
 
 import json
 import ssl
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import aiohttp
 import certifi
@@ -11,7 +11,7 @@ from typing_extensions import Unpack
 
 from .constants import SEC_MS_GEC_VERSION, VOICE_HEADERS, VOICE_LIST
 from .drm import DRM
-from .typing import Voice, VoiceManagerFind, VoiceManagerVoice
+from .typing import Voice, VoicesManagerFind, VoicesManagerVoice
 
 
 async def __list_voices(
@@ -91,12 +91,12 @@ class VoicesManager:
     """
 
     def __init__(self) -> None:
-        self.voices: List[VoiceManagerVoice] = []
+        self.voices: List[VoicesManagerVoice] = []
         self.called_create: bool = False
 
     @classmethod
     async def create(
-        cls: Any, custom_voices: Optional[List[Voice]] = None
+        cls, custom_voices: Optional[List[Voice]] = None
     ) -> "VoicesManager":
         """
         Creates a VoicesManager object and populates it with all available voices.
@@ -109,7 +109,7 @@ class VoicesManager:
         self.called_create = True
         return self
 
-    def find(self, **kwargs: Unpack[VoiceManagerFind]) -> List[VoiceManagerVoice]:
+    def find(self, **kwargs: Unpack[VoicesManagerFind]) -> List[VoicesManagerVoice]:
         """
         Finds all matching voices based on the provided attributes.
         """
