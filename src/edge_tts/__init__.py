@@ -1,6 +1,5 @@
 """edge-tts allows you to use Microsoft Edge's online text-to-speech service without
-needing Windows or the Edge browser. It Microsoft Edge's internal API to generate
-speech from text."""
+needing Windows or the Edge browser."""
 
 from . import exceptions
 from .communicate import Communicate
