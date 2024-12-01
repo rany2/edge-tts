@@ -18,11 +18,11 @@ If you only want to use the `edge-tts` and `edge-playback` commands, it would be
 
 If you want to use the `edge-tts` command, you can simply run it with the following command:
 
-    $ edge-tts --text "Hello, world!" --write-media hello.mp3 --write-subtitles hello.srt
+    edge-tts --text "Hello, world!" --write-media hello.mp3 --write-subtitles hello.srt
 
 If you wish to play it back immediately with subtitles, you could use the `edge-playback` command:
 
-    $ edge-playback --text "Hello, world!"
+    edge-playback --text "Hello, world!"
 
 Note that `edge-playback` requires the installation of the [`mpv` command line player](https://mpv.io/).
 
