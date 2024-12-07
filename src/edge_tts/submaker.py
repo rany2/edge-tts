@@ -37,6 +37,38 @@ class SubMaker:
             )
         )
 
+    def merge_cues(self, words: int) -> None:
+        """
+        Merge cues to reduce the number of cues.
+
+        Args:
+            words (int): The number of words to merge.
+
+        Returns:
+            None
+        """
+        if words <= 0:
+            raise ValueError("Invalid number of words to merge, expected > 0")
+
+        if len(self.cues) == 0:
+            return
+
+        new_cues: List[srt.Subtitle] = []  # type: ignore
+        current_cue: srt.Subtitle = self.cues[0]  # type: ignore
+        for cue in self.cues[1:]:
+            if len(current_cue.content.split()) < words:
+                current_cue = srt.Subtitle(
+                    index=current_cue.index,
+                    start=current_cue.start,
+                    end=cue.end,
+                    content=current_cue.content + " " + cue.content,
+                )
+            else:
+                new_cues.append(current_cue)
+                current_cue = cue
+        new_cues.append(current_cue)
+        self.cues = new_cues
+
     def get_srt(self) -> str:
         """
         Get the SRT formatted subtitles from the SubMaker object.
