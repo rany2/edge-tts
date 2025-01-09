@@ -72,7 +72,7 @@ async def _run_tts(args: UtilArgs) -> None:
         async for chunk in communicate.stream():
             if chunk["type"] == "audio":
                 audio_file.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
+            elif chunk["type"] in ("WordBoundary", "SentenceBoundary"):
                 submaker.feed(chunk)
 
         if args.words_in_cue > 0:

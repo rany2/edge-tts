@@ -249,9 +249,18 @@ class Communicate:
         proxy: Optional[str] = None,
         connect_timeout: Optional[int] = 10,
         receive_timeout: Optional[int] = 60,
+        boundary: Optional[str] = "WordBoundary",
     ):
+        """
+        Args:
+            boundary (str): The boundary to use for the TTS.
+                Defaults to "WordBoundary".
+                Valid values are "WordBoundary" and "SentenceBoundary".
+                If "WordBoundary", the TTS will return a word boundary for each word.
+                If "SentenceBoundary", the TTS will return a sentence boundary for each sentence. Which is more friendly to Chinese users.
+        """
         # Validate TTS settings and store the TTSConfig object.
-        self.tts_config = TTSConfig(voice, rate, volume, pitch)
+        self.tts_config = TTSConfig(voice, rate, volume, pitch, boundary)
 
         # Validate the text parameter.
         if not isinstance(text, str):
@@ -296,7 +305,7 @@ class Communicate:
     def __parse_metadata(self, data: bytes) -> TTSChunk:
         for meta_obj in json.loads(data)["Metadata"]:
             meta_type = meta_obj["Type"]
-            if meta_type == "WordBoundary":
+            if meta_type in ("WordBoundary", "SentenceBoundary"):
                 current_offset = (
                     meta_obj["Data"]["Offset"] + self.state["offset_compensation"]
                 )
@@ -315,12 +324,16 @@ class Communicate:
     async def __stream(self) -> AsyncGenerator[TTSChunk, None]:
         async def send_command_request() -> None:
             """Sends the command request to the service."""
+            wordBoundary = self.tts_config.boundary == "WordBoundary"
+            wd = "true" if wordBoundary else "false"
+            sq = "true" if not wordBoundary else "false"
             await websocket.send_str(
                 f"X-Timestamp:{date_to_string()}\r\n"
                 "Content-Type:application/json; charset=utf-8\r\n"
                 "Path:speech.config\r\n\r\n"
                 '{"context":{"synthesis":{"audio":{"metadataoptions":{'
-                '"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},'
+                f'"sentenceBoundaryEnabled":"{sq}","wordBoundaryEnabled":"{wd}"'
+                '},'
                 '"outputFormat":"audio-24khz-48kbitrate-mono-mp3"'
                 "}}}}\r\n"
             )
@@ -509,7 +522,7 @@ class Communicate:
                     audio.write(message["data"])
                 elif (
                     isinstance(metadata, TextIOWrapper)
-                    and message["type"] == "WordBoundary"
+                    and message["type"] in ("WordBoundary", "SentenceBoundary")
                 ):
                     json.dump(message, metadata)
                     metadata.write("\n")
