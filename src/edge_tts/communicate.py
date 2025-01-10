@@ -249,7 +249,7 @@ class Communicate:
         proxy: Optional[str] = None,
         connect_timeout: Optional[int] = 10,
         receive_timeout: Optional[int] = 60,
-        boundary: Optional[str] = "WordBoundary",
+        boundary: str = "WordBoundary",
     ):
         """
         Args:
