@@ -1,4 +1,4 @@
-"""SubMaker module is used to generate subtitles from WordBoundary events."""
+"""SubMaker module is used to generate subtitles from WordBoundary and SentenceBoundary events."""
 
 from typing import List
 
@@ -9,7 +9,7 @@ from .typing import TTSChunk
 
 class SubMaker:
     """
-    SubMaker is used to generate subtitles from WordBoundary messages.
+    SubMaker is used to generate subtitles from WordBoundary and SentenceBoundary messages.
     """
 
     def __init__(self) -> None:
@@ -17,15 +17,15 @@ class SubMaker:
 
     def feed(self, msg: TTSChunk) -> None:
         """
-        Feed a WordBoundary message to the SubMaker object.
+        Feed a WordBoundary or SentenceBoundary message to the SubMaker object.
 
         Args:
-            msg (dict): The WordBoundary message.
+            msg (dict): The WordBoundary or SentenceBoundary message.
 
         Returns:
             None
         """
-        if msg["type"] != "WordBoundary":
+        if msg["type"] not in ("WordBoundary", "SentenceBoundary"):
             raise ValueError("Invalid message type, expected 'WordBoundary'")
 
         self.cues.append(

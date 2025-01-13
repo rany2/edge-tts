@@ -20,7 +20,7 @@ def main() -> None:
         for chunk in communicate.stream_sync():
             if chunk["type"] == "audio":
                 file.write(chunk["data"])
-            elif chunk["type"] == "WordBoundary":
+            elif chunk["type"] in ("WordBoundary", "SentenceBoundary"):
                 submaker.feed(chunk)
 
     with open(SRT_FILE, "w", encoding="utf-8") as file:
