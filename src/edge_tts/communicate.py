@@ -18,12 +18,13 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
+    Union, TypedDict, Literal,
 )
 from xml.sax.saxutils import escape
 
 import aiohttp
 import certifi
+from typing_extensions import Unpack, NotRequired
 
 from .constants import DEFAULT_VOICE, SEC_MS_GEC_VERSION, WSS_HEADERS, WSS_URL
 from .data_classes import TTSConfig
@@ -232,6 +233,12 @@ def calc_max_mesg_size(tts_config: TTSConfig) -> int:
     return websocket_max_size - overhead_per_message
 
 
+class CommunicateRequest(TypedDict):
+    """
+    A class to communicate with the service.
+    """
+    Boundary: NotRequired[Literal["WordBoundary", "SentenceBoundary"]]
+
 class Communicate:
     """
     Communicate with the service.
@@ -249,7 +256,7 @@ class Communicate:
         proxy: Optional[str] = None,
         connect_timeout: Optional[int] = 10,
         receive_timeout: Optional[int] = 60,
-        boundary: str = "WordBoundary",
+        **kwargs: Unpack[CommunicateRequest]
     ):
         """
         Args:
@@ -257,9 +264,11 @@ class Communicate:
                 Defaults to "WordBoundary".
                 Valid values are "WordBoundary" and "SentenceBoundary".
                 If "WordBoundary", the TTS will return a word boundary for each word.
-                If "SentenceBoundary", the TTS will return a sentence boundary for each sentence. Which is more friendly to Chinese users.
+                If "SentenceBoundary", the TTS will return a sentence boundary for each sentence.
+                    Which is more friendly to Chinese users.
         """
         # Validate TTS settings and store the TTSConfig object.
+        boundary = kwargs.get("Boundary", "WordBoundary")
         self.tts_config = TTSConfig(voice, rate, volume, pitch, boundary)
 
         # Validate the text parameter.
@@ -324,9 +333,9 @@ class Communicate:
     async def __stream(self) -> AsyncGenerator[TTSChunk, None]:
         async def send_command_request() -> None:
             """Sends the command request to the service."""
-            wordBoundary = self.tts_config.boundary == "WordBoundary"
-            wd = "true" if wordBoundary else "false"
-            sq = "true" if not wordBoundary else "false"
+            word_boundary = self.tts_config.boundary == "WordBoundary"
+            wd = "true" if word_boundary else "false"
+            sq = "true" if not word_boundary else "false"
             await websocket.send_str(
                 f"X-Timestamp:{date_to_string()}\r\n"
                 "Content-Type:application/json; charset=utf-8\r\n"
