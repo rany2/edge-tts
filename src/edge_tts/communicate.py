@@ -16,15 +16,17 @@ from typing import (
     Dict,
     Generator,
     List,
+    Literal,
     Optional,
     Tuple,
-    Union, TypedDict, Literal,
+    TypedDict,
+    Union,
 )
 from xml.sax.saxutils import escape
 
 import aiohttp
 import certifi
-from typing_extensions import Unpack, NotRequired
+from typing_extensions import NotRequired, Unpack
 
 from .constants import DEFAULT_VOICE, SEC_MS_GEC_VERSION, WSS_HEADERS, WSS_URL
 from .data_classes import TTSConfig
@@ -237,7 +239,9 @@ class CommunicateRequest(TypedDict):
     """
     A class to communicate with the service.
     """
+
     Boundary: NotRequired[Literal["WordBoundary", "SentenceBoundary"]]
+
 
 class Communicate:
     """
@@ -256,7 +260,7 @@ class Communicate:
         proxy: Optional[str] = None,
         connect_timeout: Optional[int] = 10,
         receive_timeout: Optional[int] = 60,
-        **kwargs: Unpack[CommunicateRequest]
+        **kwargs: Unpack[CommunicateRequest],
     ):
         """
         Args:
@@ -267,6 +271,7 @@ class Communicate:
                 If "SentenceBoundary", the TTS will return a sentence boundary for each sentence.
                     Which is more friendly to Chinese users.
         """
+
         # Validate TTS settings and store the TTSConfig object.
         boundary = kwargs.get("Boundary", "WordBoundary")
         self.tts_config = TTSConfig(voice, rate, volume, pitch, boundary)
@@ -342,7 +347,7 @@ class Communicate:
                 "Path:speech.config\r\n\r\n"
                 '{"context":{"synthesis":{"audio":{"metadataoptions":{'
                 f'"sentenceBoundaryEnabled":"{sq}","wordBoundaryEnabled":"{wd}"'
-                '},'
+                "},"
                 '"outputFormat":"audio-24khz-48kbitrate-mono-mp3"'
                 "}}}}\r\n"
             )
@@ -529,9 +534,9 @@ class Communicate:
             async for message in self.stream():
                 if message["type"] == "audio":
                     audio.write(message["data"])
-                elif (
-                    isinstance(metadata, TextIOWrapper)
-                    and message["type"] in ("WordBoundary", "SentenceBoundary")
+                elif isinstance(metadata, TextIOWrapper) and message["type"] in (
+                    "WordBoundary",
+                    "SentenceBoundary",
                 ):
                     json.dump(message, metadata)
                     metadata.write("\n")

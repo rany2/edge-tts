@@ -37,5 +37,6 @@ def main() -> None:
     stdout.write(f"audio file length: {len(audio_bytes)}")
     stdout.write(submaker.get_srt())
 
+
 if __name__ == "__main__":
     main()
