@@ -73,4 +73,4 @@ Other projects that use the `edge-tts` module include:
 
 * [hass-edge-tts](https://github.com/hasscc/hass-edge-tts/blob/main/custom_components/edge_tts/tts.py)
 * [Podcastfy](https://github.com/souzatharsis/podcastfy/blob/main/podcastfy/tts/providers/edge.py)
-
+* [tts-samples](https://github.com/yaph/tts-samples/blob/main/bin/create_sound_samples.py)
