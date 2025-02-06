@@ -10,11 +10,11 @@ from typing_extensions import Literal, NotRequired, TypedDict
 class TTSChunk(TypedDict):
     """TTS chunk data."""
 
-    type: Literal["audio", "WordBoundary"]
+    type: Literal["audio", "WordBoundary", "SentenceBoundary"]
     data: NotRequired[bytes]  # only for audio
-    duration: NotRequired[float]  # only for WordBoundary
-    offset: NotRequired[float]  # only for WordBoundary
-    text: NotRequired[str]  # only for WordBoundary
+    duration: NotRequired[float]  # only for WordBoundary and SentenceBoundary
+    offset: NotRequired[float]  # only for WordBoundary and SentenceBoundary
+    text: NotRequired[str]  # only for WordBoundary and SentenceBoundary
 
 
 class VoiceTag(TypedDict):
