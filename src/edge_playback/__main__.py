@@ -1,6 +1,9 @@
 """Main entrypoint for the edge-playback package."""
 
+import argparse
+import ctypes
 import os
+import platform
 import subprocess
 import sys
 import tempfile
@@ -14,7 +17,26 @@ def pr_err(msg: str) -> None:
 
 def _main() -> None:
     depcheck_failed = False
-    for dep in ("edge-tts", "mpv"):
+
+    parser = argparse.ArgumentParser(
+        prog="edge-playback",
+        description="Speak text using Microsoft Edge's online text-to-speech API",
+        epilog="See `edge-tts` for additional arguments",
+    )
+    parser.add_argument(
+        "--mpv",
+        action="store_true",
+        help="Use mpv to play audio. By default, false on Windows and true on all other platforms",
+    )
+    args, tts_args = parser.parse_known_args()
+
+    use_mpv = platform.system() != "Windows" or args.mpv
+
+    deps = ["edge-tts"]
+    if use_mpv:
+        deps.append("mpv")
+
+    for dep in deps:
         if not which(dep):
             pr_err(f"{dep} is not installed.")
             depcheck_failed = True
@@ -46,18 +68,30 @@ def _main() -> None:
                 f"--write-media={mp3_fname}",
                 f"--write-subtitles={srt_fname}",
             ]
-            + sys.argv[1:]
+            + tts_args
         ) as process:
             process.communicate()
 
-        with subprocess.Popen(
-            [
-                "mpv",
-                f"--sub-file={srt_fname}",
-                mp3_fname,
-            ]
-        ) as process:
-            process.communicate()
+        if platform.system() == "Windows" and not use_mpv:
+
+            def mci_send(msg: str) -> None:
+                result = ctypes.windll.winmm.mciSendStringW(msg, 0, 0, 0)
+                if result != 0:
+                    print(f"Error {result} in mciSendString {msg}")
+
+            mci_send("Close All")
+            mci_send(f'Open "{mp3_fname}" Type MPEGVideo Alias theMP3')
+            mci_send("Play theMP3 Wait")
+            mci_send("Close theMP3")
+        else:
+            with subprocess.Popen(
+                [
+                    "mpv",
+                    f"--sub-file={srt_fname}",
+                    mp3_fname,
+                ]
+            ) as process:
+                process.communicate()
     finally:
         if keep:
             print(f"\nKeeping temporary files: {mp3_fname} and {srt_fname}")
