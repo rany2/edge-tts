@@ -3,7 +3,6 @@
 import argparse
 import ctypes
 import os
-import platform
 import subprocess
 import sys
 import tempfile
@@ -30,7 +29,7 @@ def _main() -> None:
     )
     args, tts_args = parser.parse_known_args()
 
-    use_mpv = platform.system() != "Windows" or args.mpv
+    use_mpv = sys.platform != "win32" or args.mpv
 
     deps = ["edge-tts"]
     if use_mpv:
@@ -72,7 +71,7 @@ def _main() -> None:
         ) as process:
             process.communicate()
 
-        if platform.system() == "Windows" and not use_mpv:
+        if sys.platform == "win32" and not use_mpv:
 
             def mci_send(msg: str) -> None:
                 result = ctypes.windll.winmm.mciSendStringW(msg, 0, 0, 0)
