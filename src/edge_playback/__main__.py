@@ -1,17 +1,13 @@
 """Main entrypoint for the edge-playback package."""
 
 import argparse
-import ctypes
 import os
 import subprocess
 import sys
 import tempfile
 from shutil import which
 
-
-def pr_err(msg: str) -> None:
-    """Print to stderr."""
-    print(msg, file=sys.stderr)
+from .util import pr_err
 
 
 def _main() -> None:
@@ -54,34 +50,26 @@ def _main() -> None:
             media.close()
             mp3_fname = media.name
 
-        if not srt_fname:
+        if not srt_fname and use_mpv:
             subtitle = tempfile.NamedTemporaryFile(suffix=".srt", delete=False)
             subtitle.close()
             srt_fname = subtitle.name
 
         print(f"Media file: {mp3_fname}")
         print(f"Subtitle file: {srt_fname}\n")
-        with subprocess.Popen(
-            [
-                "edge-tts",
-                f"--write-media={mp3_fname}",
-                f"--write-subtitles={srt_fname}",
-            ]
-            + tts_args
-        ) as process:
+
+        edge_tts_cmd = ["edge-tts", f"--write-media={mp3_fname}"]
+        if srt_fname:
+            edge_tts_cmd.append(f"--write-subtitles={srt_fname}")
+        edge_tts_cmd = edge_tts_cmd + tts_args
+        with subprocess.Popen(edge_tts_cmd) as process:
             process.communicate()
 
         if sys.platform == "win32" and not use_mpv:
+            # pylint: disable-next=import-outside-toplevel
+            from .win32_playback import play_mp3_win32
 
-            def mci_send(msg: str) -> None:
-                result = ctypes.windll.winmm.mciSendStringW(msg, 0, 0, 0)
-                if result != 0:
-                    print(f"Error {result} in mciSendString {msg}")
-
-            mci_send("Close All")
-            mci_send(f'Open "{mp3_fname}" Type MPEGVideo Alias theMP3')
-            mci_send("Play theMP3 Wait")
-            mci_send("Close theMP3")
+            play_mp3_win32(mp3_fname)
         else:
             with subprocess.Popen(
                 [
