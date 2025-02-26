@@ -7,6 +7,7 @@ from .util import pr_err
 
 def play_mp3_win32(mp3_fname: str) -> None:
     """Play mp3 file with given path using win32 API"""
+    # pylint: disable-next=import-outside-toplevel
     from ctypes import create_unicode_buffer, windll, wintypes
 
     if sys.platform == "win32":

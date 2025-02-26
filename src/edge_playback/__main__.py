@@ -56,7 +56,8 @@ def _main() -> None:
             srt_fname = subtitle.name
 
         print(f"Media file: {mp3_fname}")
-        print(f"Subtitle file: {srt_fname}\n")
+        if srt_fname:
+            print(f"Subtitle file: {srt_fname}\n")
 
         edge_tts_cmd = ["edge-tts", f"--write-media={mp3_fname}"]
         if srt_fname:
