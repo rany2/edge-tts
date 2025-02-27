@@ -1,4 +1,4 @@
-"""Utility functions for the command line interface."""
+"""Utility functions for edge-playback"""
 
 import sys
 
