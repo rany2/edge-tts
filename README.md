@@ -24,7 +24,7 @@ If you wish to play it back immediately with subtitles, you could use the `edge-
 
     $ edge-playback --text "Hello, world!"
 
-Note that `edge-playback` requires the installation of the [`mpv` command line player](https://mpv.io/).
+Note that `edge-playback` requires the installation of the [`mpv` command line player](https://mpv.io/), except on Windows.
 
 All `edge-tts` commands work with `edge-playback` with the exception of the `--write-media`, `--write-subtitles` and `--list-voices` options.
 

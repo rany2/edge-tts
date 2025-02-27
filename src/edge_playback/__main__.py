@@ -1,20 +1,37 @@
 """Main entrypoint for the edge-playback package."""
 
+import argparse
 import os
 import subprocess
 import sys
 import tempfile
 from shutil import which
 
-
-def pr_err(msg: str) -> None:
-    """Print to stderr."""
-    print(msg, file=sys.stderr)
+from .util import pr_err
 
 
 def _main() -> None:
     depcheck_failed = False
-    for dep in ("edge-tts", "mpv"):
+
+    parser = argparse.ArgumentParser(
+        prog="edge-playback",
+        description="Speak text using Microsoft Edge's online text-to-speech API",
+        epilog="See `edge-tts` for additional arguments",
+    )
+    parser.add_argument(
+        "--mpv",
+        action="store_true",
+        help="Use mpv to play audio. By default, false on Windows and true on all other platforms",
+    )
+    args, tts_args = parser.parse_known_args()
+
+    use_mpv = sys.platform != "win32" or args.mpv
+
+    deps = ["edge-tts"]
+    if use_mpv:
+        deps.append("mpv")
+
+    for dep in deps:
         if not which(dep):
             pr_err(f"{dep} is not installed.")
             depcheck_failed = True
@@ -33,31 +50,36 @@ def _main() -> None:
             media.close()
             mp3_fname = media.name
 
-        if not srt_fname:
+        if not srt_fname and use_mpv:
             subtitle = tempfile.NamedTemporaryFile(suffix=".srt", delete=False)
             subtitle.close()
             srt_fname = subtitle.name
 
         print(f"Media file: {mp3_fname}")
-        print(f"Subtitle file: {srt_fname}\n")
-        with subprocess.Popen(
-            [
-                "edge-tts",
-                f"--write-media={mp3_fname}",
-                f"--write-subtitles={srt_fname}",
-            ]
-            + sys.argv[1:]
-        ) as process:
+        if srt_fname:
+            print(f"Subtitle file: {srt_fname}\n")
+
+        edge_tts_cmd = ["edge-tts", f"--write-media={mp3_fname}"]
+        if srt_fname:
+            edge_tts_cmd.append(f"--write-subtitles={srt_fname}")
+        edge_tts_cmd = edge_tts_cmd + tts_args
+        with subprocess.Popen(edge_tts_cmd) as process:
             process.communicate()
 
-        with subprocess.Popen(
-            [
-                "mpv",
-                f"--sub-file={srt_fname}",
-                mp3_fname,
-            ]
-        ) as process:
-            process.communicate()
+        if sys.platform == "win32" and not use_mpv:
+            # pylint: disable-next=import-outside-toplevel
+            from .win32_playback import play_mp3_win32
+
+            play_mp3_win32(mp3_fname)
+        else:
+            with subprocess.Popen(
+                [
+                    "mpv",
+                    f"--sub-file={srt_fname}",
+                    mp3_fname,
+                ]
+            ) as process:
+                process.communicate()
     finally:
         if keep:
             print(f"\nKeeping temporary files: {mp3_fname} and {srt_fname}")
