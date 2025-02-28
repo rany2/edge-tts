@@ -10,11 +10,15 @@ import argparse
 # Initialize FastAPI app
 app = FastAPI()
 
+# Custom output directory inside the container (persistent within container)
+OUTPUT_DIR = "/app/output"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 # Create an argument parser for handling dynamic port, SSL key, and SSL cert input
 def parse_arguments():
     parser = argparse.ArgumentParser(description="FastAPI server with dynamic port and SSL")
     
-    # Arguments for port, SSL key and SSL cert
+    # Arguments for port, SSL key, and SSL cert
     parser.add_argument("--port", type=int, default=2222, help="Port to run the FastAPI server on (default: 2222)")
     parser.add_argument("--ssl_key", type=str, help="Path to SSL key file")
     parser.add_argument("--ssl_cert", type=str, help="Path to SSL certificate file")
@@ -28,14 +32,10 @@ async def create_tts(request: dict):
     voice = request.get("voice", "en-US-ChristopherNeural")
     word_by_word = request.get("word_by_word", "False")
 
-    # Generate temporary file names
-    temp_audio_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-    temp_srt_file = tempfile.NamedTemporaryFile(delete=False, suffix=".srt")
-    temp_zip_file = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
-
-    audio_file = temp_audio_file.name
-    srt_file = temp_srt_file.name
-    zip_file = temp_zip_file.name
+    # Use custom directory for storing files
+    audio_file = os.path.join(OUTPUT_DIR, "output.mp3")
+    srt_file = os.path.join(OUTPUT_DIR, "output.srt")
+    zip_file = os.path.join(OUTPUT_DIR, "tts_files.zip")
 
     # Command to generate TTS using edge-tts
     command = f'edge-tts --text "{text}" --voice "{voice}" --write-media "{audio_file}" --write-subtitles "{srt_file}"'
