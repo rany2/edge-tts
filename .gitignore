@@ -162,3 +162,4 @@ cython_debug/
 # Edge-TTS specific ignores
 *.mp3
 *.srt
+/.idea/
