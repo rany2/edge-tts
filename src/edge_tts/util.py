@@ -4,13 +4,10 @@ import argparse
 import asyncio
 import sys
 from typing import Optional, TextIO
-
 from tabulate import tabulate
-
-from . import Communicate, SubMaker, list_voices
+from . import Communicate, list_voices, SubMaker  # SubMaker is imported globally from __init__.py
 from .constants import DEFAULT_VOICE
 from .data_classes import UtilArgs
-
 
 async def _print_voices(*, proxy: Optional[str]) -> None:
     """Print all available voices."""
@@ -28,10 +25,8 @@ async def _print_voices(*, proxy: Optional[str]) -> None:
     ]
     print(tabulate(table, headers))
 
-
 async def _run_tts(args: UtilArgs) -> None:
     """Run TTS after parsing arguments from command line."""
-
     try:
         if sys.stdin.isatty() and sys.stdout.isatty() and not args.write_media:
             print(
@@ -54,7 +49,11 @@ async def _run_tts(args: UtilArgs) -> None:
         pitch=args.pitch,
         proxy=args.proxy,
     )
-    submaker = SubMaker()
+
+    # Here, SubMaker is already imported from the package
+    submaker = SubMaker()  # Use the imported version
+    submaker.set_original_text(args.text)
+
     try:
         audio_file = (
             open(args.write_media, "wb")
@@ -85,7 +84,6 @@ async def _run_tts(args: UtilArgs) -> None:
             audio_file.close()
         if sub_file is not None and sub_file is not sys.stderr:
             sub_file.close()
-
 
 async def amain() -> None:
     """Async main function"""
@@ -124,6 +122,10 @@ async def amain() -> None:
         help="send subtitle output to provided file instead of stderr",
     )
     parser.add_argument("--proxy", help="use a proxy for TTS and voice list.")
+    parser.add_argument(
+        "--word-by-word", action="store_true", help="Use word-by-word subtitles"
+    )
+
     args = parser.parse_args(namespace=UtilArgs())
 
     if args.list_voices:
@@ -140,11 +142,9 @@ async def amain() -> None:
     if args.text is not None:
         await _run_tts(args)
 
-
 def main() -> None:
     """Run the main function using asyncio."""
     asyncio.run(amain())
-
 
 if __name__ == "__main__":
     main()
