@@ -1,0 +1,54 @@
+{
+  "tasks": {
+    "dev": "deno run --allow-net --import-map=import_map.json mod.ts",
+    "test": "deno test --allow-net --import-map=import_map.json",
+    "lint": "deno lint",
+    "fmt": "deno fmt",
+    "cli": "deno run --allow-net --allow-read --allow-write --import-map=import_map.json mod.ts",
+    "example:simple": "deno run --allow-net --import-map=import_map.json examples/simple_tts.ts",
+    "example:subtitle": "deno run --allow-net --allow-write --import-map=import_map.json examples/subtitle_generation.ts",
+    "example:advanced": "deno run --allow-net --allow-write --import-map=import_map.json examples/advanced_streaming.ts",
+    "test:subtitle": "deno test --allow-net --import-map=import_map.json examples/test_subtitle.ts",
+    "check": "deno check --import-map=import_map.json mod.ts"
+  },
+  "fmt": {
+    "files": {
+      "include": ["src/", "examples/"]
+    },
+    "options": {
+      "useTabs": false,
+      "lineWidth": 80,
+      "indentWidth": 2,
+      "singleQuote": true,
+      "proseWrap": "preserve"
+    }
+  },
+  "lint": {
+    "files": {
+      "include": ["src/", "examples/"]
+    },
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": false,
+    "lib": ["deno.window"],
+    "types": ["deno"]
+  },
+  "imports": {
+    "std/": "https://deno.land/std@0.218.2/",
+    "std/assert": "https://deno.land/std@0.218.2/assert/mod.ts",
+    "std/async": "https://deno.land/std@0.218.2/async/mod.ts",
+    "std/flags": "https://deno.land/std@0.218.2/flags/mod.ts",
+    "std/fmt": "https://deno.land/std@0.218.2/fmt/colors.ts",
+    "std/fs": "https://deno.land/std@0.218.2/fs/mod.ts",
+    "std/path": "https://deno.land/std@0.218.2/path/mod.ts",
+    "std/testing": "https://deno.land/std@0.218.2/testing/mod.ts",
+    "ws": "https://deno.land/x/websocket@v0.1.4/mod.ts",
+    "@src/": "./src/",
+    "@examples/": "./examples/",
+    "@/": "./"
+  }
+}

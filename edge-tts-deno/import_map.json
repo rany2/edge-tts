@@ -1,0 +1,16 @@
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.218.2/",
+    "std/assert": "https://deno.land/std@0.218.2/assert/mod.ts",
+    "std/async": "https://deno.land/std@0.218.2/async/mod.ts",
+    "std/flags": "https://deno.land/std@0.218.2/flags/mod.ts",
+    "std/fmt": "https://deno.land/std@0.218.2/fmt/colors.ts",
+    "std/fs": "https://deno.land/std@0.218.2/fs/mod.ts",
+    "std/path": "https://deno.land/std@0.218.2/path/mod.ts",
+    "std/testing": "https://deno.land/std@0.218.2/testing/mod.ts",
+    "ws": "https://deno.land/x/websocket@v0.1.4/mod.ts",
+    "@src/": "./src/",
+    "@examples/": "./examples/",
+    "@/": "./"
+  }
+}
