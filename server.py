@@ -1,6 +1,6 @@
 import os
 import subprocess
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 import tempfile
 import zipfile
@@ -27,7 +27,7 @@ def parse_arguments():
     return parser.parse_args()
 
 @app.post("/")
-async def create_tts(request: dict):
+async def create_tts(request: dict, background_tasks: BackgroundTasks):
     # Extract arguments from the request
     text = request.get("text", "")
     voice = request.get("voice", "en-US-ChristopherNeural")
@@ -55,6 +55,17 @@ async def create_tts(request: dict):
             zipf.write(audio_file, "output.mp3")
             zipf.write(srt_file, "output.srt")
 
+        # Cleanup function to delete the files after the download
+        def cleanup_files():
+            if os.path.exists(audio_file):
+                os.remove(audio_file)
+            if os.path.exists(srt_file):
+                os.remove(srt_file)
+            if os.path.exists(zip_file):
+                os.remove(zip_file)
+
+        # Add cleanup task to background after the response is sent
+        background_tasks.add_task(cleanup_files)
         # Return ZIP file for download
         return FileResponse(zip_file, media_type="application/zip", filename="tts_files.zip")
 
