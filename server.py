@@ -6,6 +6,7 @@ import tempfile
 import zipfile
 import uvicorn
 import argparse
+import shlex
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -37,8 +38,11 @@ async def create_tts(request: dict):
     srt_file = os.path.join(OUTPUT_DIR, "output.srt")
     zip_file = os.path.join(OUTPUT_DIR, "tts_files.zip")
 
+    # Safely quote the text to prevent issues in the shell command
+    safe_text = shlex.quote(text)
+    
     # Command to generate TTS using edge-tts
-    command = f'edge-tts --text "{text}" --voice "{voice}" --write-media "{audio_file}" --write-subtitles "{srt_file}"'
+    command = f'edge-tts --text "{safe_text}" --voice "{voice}" --write-media "{audio_file}" --write-subtitles "{srt_file}"'
     if word_by_word.lower() == "true":
         command += " --word-by-word"
 
