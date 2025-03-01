@@ -39,16 +39,26 @@ async def create_tts(request: dict, background_tasks: BackgroundTasks):
     zip_file = os.path.join(OUTPUT_DIR, "tts_files.zip")
 
     # Safely quote the text to prevent issues in the shell command
+    # Ensure proper quoting
     safe_text = shlex.quote(text)
-    
-    # Command to generate TTS using edge-tts
-    command = f'edge-tts --text "{safe_text}" --voice "{voice}" --write-media "{audio_file}" --write-subtitles "{srt_file}"'
+    safe_voice = shlex.quote(voice)
+    safe_audio_file = shlex.quote(audio_file)
+    safe_srt_file = shlex.quote(srt_file)
+
+    # Construct command safely
+    command = f"edge-tts --text {safe_text} --voice {safe_voice} --write-media {safe_audio_file} --write-subtitles {safe_srt_file}"
     if word_by_word.lower() == "true":
         command += " --word-by-word"
 
+    print(f"Executing command: {command}")  # Debugging: Print the command
+
     try:
         # Run edge-tts to generate the audio and subtitle files
-        subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+        result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
+
+        # Print stdout and stderr for debugging
+        print(f"Command stdout: {result.stdout}")
+        print(f"Command stderr: {result.stderr}")
 
         # Create a ZIP file containing the .mp3 and .srt files
         with zipfile.ZipFile(zip_file, "w") as zipf:
@@ -70,12 +80,16 @@ async def create_tts(request: dict, background_tasks: BackgroundTasks):
         return FileResponse(zip_file, media_type="application/zip", filename="tts_files.zip")
 
     except subprocess.CalledProcessError as e:
-        print(f"Error while running command: {e.stderr}")
-        raise HTTPException(status_code=500, detail=f"Error during file generation: {e.stderr}")
+        print(f"Error while running command: {e.stderr}")  # Print error
+        print(f"Full error details:\nReturn Code: {e.returncode}\nStdout: {e.stdout}\nStderr: {e.stderr}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error during file generation: {e.stderr or 'Unknown error'}"
+        )
 
     except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Unexpected error occurred")
+        print(f"Unexpected error: {str(e)}")  # Print unexpected errors
+        raise HTTPException(status_code=500, detail=f"Unexpected error occurred: {str(e)}")
 
 # Function to run FastAPI with SSL
 def run_fastapi_with_ssl(port, ssl_key_path, ssl_cert_path):
