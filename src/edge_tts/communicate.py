@@ -123,11 +123,24 @@ def split_text_by_byte_length(
         raise ValueError("byte_length must be greater than 0")
 
     while len(text) > byte_length:
-        # Find the last space in the string
-        split_at = text.rfind(b" ", 0, byte_length)
+        # Find the last newline in the string
+        split_at = text.rfind(b"\n", 0, byte_length)
+        if split_at < 0:
+            # Find the last space in the string
+            split_at = text.rfind(b" ", 0, byte_length)
 
-        # If no space found, split_at is byte_length
-        split_at = split_at if split_at != -1 else byte_length
+        if split_at < 0:
+            # If no space found, split_at is byte_length
+            # Verify that the text is valid UTF-8
+            split_at = byte_length
+            while split_at > 0:
+                try:
+                    text[:split_at].decode("utf-8")
+                    break
+                except UnicodeDecodeError:
+                    split_at -= 1
+            if split_at == 0:
+                raise ValueError("Byte length too small or text is invalid UTF-8.")
 
         # Verify all & are terminated with a ;
         while b"&" in text[:split_at]:
