@@ -231,7 +231,8 @@ def split_text_by_byte_length(
             # This should not happen if byte_length is reasonable,
             # but guards against edge cases.
             raise ValueError(
-                "Maximum byte length is too small or invalid text structure near '&' or invalid UTF-8"
+                "Maximum byte length is too small or "
+                "invalid text structure near '&' or invalid UTF-8"
             )
 
         # Yield the chunk
