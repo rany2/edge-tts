@@ -20,7 +20,7 @@ from typing import (
     Tuple,
     Union,
 )
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape, unescape
 
 import aiohttp
 import certifi
@@ -401,7 +401,7 @@ class Communicate:
                     "type": meta_type,
                     "offset": current_offset,
                     "duration": current_duration,
-                    "text": meta_obj["Data"]["text"]["Text"],
+                    "text": unescape(meta_obj["Data"]["text"]["Text"]),
                 }
             if meta_type in ("SessionEnd",):
                 continue
