@@ -345,9 +345,11 @@ class Communicate:
         proxy: Optional[str] = None,
         connect_timeout: Optional[int] = 10,
         receive_timeout: Optional[int] = 60,
+        mark_word_boundary: callable = lambda: ...,
     ):
         # Validate TTS settings and store the TTSConfig object.
         self.tts_config = TTSConfig(voice, rate, volume, pitch)
+        self.mark_word_boundary = mark_word_boundary
 
         # Validate the text parameter.
         if not isinstance(text, str):
@@ -577,6 +579,8 @@ class Communicate:
         for self.state["partial_text"] in self.texts:
             try:
                 async for message in self.__stream():
+                    if message.get("type") == "WordBoundary" :
+                        self.mark_word_boundary()
                     yield message
             except aiohttp.ClientResponseError as e:
                 if e.status != 403:
