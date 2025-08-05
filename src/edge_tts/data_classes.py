@@ -17,6 +17,7 @@ class TTSConfig:
     rate: str
     volume: str
     pitch: str
+    boundary: str
 
     @staticmethod
     def validate_string_param(param_name: str, param_value: str, pattern: str) -> str:
