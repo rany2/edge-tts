@@ -108,12 +108,6 @@ async def amain() -> None:
     parser.add_argument("--volume", help="set TTS volume. Default +0%%.", default="+0%")
     parser.add_argument("--pitch", help="set TTS pitch. Default +0Hz.", default="+0Hz")
     parser.add_argument(
-        "--words-in-cue",
-        help="number of words in a subtitle cue. Default: 10.",
-        default=10,
-        type=int,
-    )
-    parser.add_argument(
         "--write-media", help="send media output to file instead of stdout"
     )
     parser.add_argument(
