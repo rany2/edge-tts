@@ -24,7 +24,7 @@ VOICE = "zh-CN-YunjianNeural"
 
 def main() -> None:
     """Main function"""
-    communicate = edge_tts.Communicate(TEXT, VOICE, Boundary="SentenceBoundary")
+    communicate = edge_tts.Communicate(TEXT, VOICE, boundary="SentenceBoundary")
     submaker = edge_tts.SubMaker()
     stdout = sys.stdout
     audio_bytes = []

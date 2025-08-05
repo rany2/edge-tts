@@ -5,6 +5,7 @@
 import argparse
 import re
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass
@@ -17,7 +18,7 @@ class TTSConfig:
     rate: str
     volume: str
     pitch: str
-    boundary: str
+    boundary: Literal["WordBoundary", "SentenceBoundary"]
 
     @staticmethod
     def validate_string_param(param_name: str, param_value: str, pattern: str) -> str:
