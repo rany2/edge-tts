@@ -75,9 +75,6 @@ async def _run_tts(args: UtilArgs) -> None:
             elif chunk["type"] in ("WordBoundary", "SentenceBoundary"):
                 submaker.feed(chunk)
 
-        if args.words_in_cue > 0:
-            submaker.merge_cues(args.words_in_cue)
-
         if sub_file is not None:
             sub_file.write(submaker.get_srt())
     finally:

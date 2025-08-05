@@ -1,7 +1,7 @@
 """SubMaker module is used to generate subtitles from WordBoundary and SentenceBoundary events."""
 
 from datetime import timedelta
-from typing import List
+from typing import List, Optional
 
 from .srt_composer import Subtitle, compose
 from .typing import TTSChunk
@@ -14,6 +14,7 @@ class SubMaker:
 
     def __init__(self) -> None:
         self.cues: List[Subtitle] = []
+        self.type: Optional[str] = None
 
     def feed(self, msg: TTSChunk) -> None:
         """
@@ -26,7 +27,16 @@ class SubMaker:
             None
         """
         if msg["type"] not in ("WordBoundary", "SentenceBoundary"):
-            raise ValueError("Invalid message type, expected 'WordBoundary'")
+            raise ValueError(
+                "Invalid message type, expected 'WordBoundary' or 'SentenceBoundary'."
+            )
+
+        if self.type is None:
+            self.type = msg["type"]
+        elif self.type != msg["type"]:
+            raise ValueError(
+                f"Expected message type '{self.type}', but got '{msg['type']}'."
+            )
 
         self.cues.append(
             Subtitle(
@@ -36,38 +46,6 @@ class SubMaker:
                 content=msg["text"],
             )
         )
-
-    def merge_cues(self, words: int) -> None:
-        """
-        Merge cues to reduce the number of cues.
-
-        Args:
-            words (int): The number of words to merge.
-
-        Returns:
-            None
-        """
-        if words <= 0:
-            raise ValueError("Invalid number of words to merge, expected > 0")
-
-        if len(self.cues) == 0:
-            return
-
-        new_cues: List[Subtitle] = []
-        current_cue: Subtitle = self.cues[0]
-        for cue in self.cues[1:]:
-            if len(current_cue.content.split()) < words:
-                current_cue = Subtitle(
-                    index=current_cue.index,
-                    start=current_cue.start,
-                    end=cue.end,
-                    content=f"{current_cue.content} {cue.content}",
-                )
-            else:
-                new_cues.append(current_cue)
-                current_cue = cue
-        new_cues.append(current_cue)
-        self.cues = new_cues
 
     def get_srt(self) -> str:
         """

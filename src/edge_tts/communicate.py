@@ -19,14 +19,12 @@ from typing import (
     Literal,
     Optional,
     Tuple,
-    TypedDict,
     Union,
 )
 from xml.sax.saxutils import escape, unescape
 
 import aiohttp
 import certifi
-from typing_extensions import NotRequired, Unpack
 
 from .constants import DEFAULT_VOICE, SEC_MS_GEC_VERSION, WSS_HEADERS, WSS_URL
 from .data_classes import TTSConfig
@@ -311,19 +309,12 @@ def ssml_headers_plus_data(request_id: str, timestamp: str, ssml: str) -> str:
     )
 
 
-class CommunicateRequest(TypedDict):
-    """
-    A class to communicate with the service.
-    """
-
-    Boundary: NotRequired[Literal["WordBoundary", "SentenceBoundary"]]
-
-
 class Communicate:
     """
     Communicate with the service.
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         text: str,
@@ -332,24 +323,13 @@ class Communicate:
         rate: str = "+0%",
         volume: str = "+0%",
         pitch: str = "+0Hz",
+        boundary: Literal["WordBoundary", "SentenceBoundary"] = "SentenceBoundary",
         connector: Optional[aiohttp.BaseConnector] = None,
         proxy: Optional[str] = None,
         connect_timeout: Optional[int] = 10,
         receive_timeout: Optional[int] = 60,
-        **kwargs: Unpack[CommunicateRequest],
     ):
-        """
-        Args:
-            boundary (str): The boundary to use for the TTS.
-                Defaults to "WordBoundary".
-                Valid values are "WordBoundary" and "SentenceBoundary".
-                If "WordBoundary", the TTS will return a word boundary for each word.
-                If "SentenceBoundary", the TTS will return a sentence boundary for each sentence.
-                    Which is more friendly to Chinese users.
-        """
-
         # Validate TTS settings and store the TTSConfig object.
-        boundary = kwargs.get("Boundary", "WordBoundary")
         self.tts_config = TTSConfig(voice, rate, volume, pitch, boundary)
 
         # Validate the text parameter.
