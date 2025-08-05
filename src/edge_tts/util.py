@@ -134,7 +134,7 @@ async def amain() -> None:
         if args.file in ("-", "/dev/stdin"):
             args.text = sys.stdin.read()
         else:
-            with open(args.file, "r", encoding="utf-8") as file:
+            with open(args.file, encoding="utf-8") as file:
                 args.text = file.read()
 
     if args.text is not None:

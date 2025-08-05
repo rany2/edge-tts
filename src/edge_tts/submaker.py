@@ -1,9 +1,9 @@
 """SubMaker module is used to generate subtitles from WordBoundary and SentenceBoundary events."""
 
+from datetime import timedelta
 from typing import List
 
-import srt  # type: ignore
-
+from .srt_composer import Subtitle, compose
 from .typing import TTSChunk
 
 
@@ -13,7 +13,7 @@ class SubMaker:
     """
 
     def __init__(self) -> None:
-        self.cues: List[srt.Subtitle] = []  # type: ignore
+        self.cues: List[Subtitle] = []
 
     def feed(self, msg: TTSChunk) -> None:
         """
@@ -29,10 +29,10 @@ class SubMaker:
             raise ValueError("Invalid message type, expected 'WordBoundary'")
 
         self.cues.append(
-            srt.Subtitle(
+            Subtitle(
                 index=len(self.cues) + 1,
-                start=srt.timedelta(microseconds=msg["offset"] / 10),
-                end=srt.timedelta(microseconds=(msg["offset"] + msg["duration"]) / 10),
+                start=timedelta(microseconds=msg["offset"] / 10),
+                end=timedelta(microseconds=(msg["offset"] + msg["duration"]) / 10),
                 content=msg["text"],
             )
         )
@@ -53,15 +53,15 @@ class SubMaker:
         if len(self.cues) == 0:
             return
 
-        new_cues: List[srt.Subtitle] = []  # type: ignore
-        current_cue: srt.Subtitle = self.cues[0]  # type: ignore
+        new_cues: List[Subtitle] = []
+        current_cue: Subtitle = self.cues[0]
         for cue in self.cues[1:]:
             if len(current_cue.content.split()) < words:
-                current_cue = srt.Subtitle(
+                current_cue = Subtitle(
                     index=current_cue.index,
                     start=current_cue.start,
                     end=cue.end,
-                    content=current_cue.content + " " + cue.content,
+                    content=f"{current_cue.content} {cue.content}",
                 )
             else:
                 new_cues.append(current_cue)
@@ -76,7 +76,7 @@ class SubMaker:
         Returns:
             str: The SRT formatted subtitles.
         """
-        return srt.compose(self.cues)  # type: ignore
+        return compose(self.cues)
 
     def __str__(self) -> str:
         return self.get_srt()
