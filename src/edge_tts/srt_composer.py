@@ -1,6 +1,6 @@
 """A tiny library for composing SRT files.
 
-Based on https://github.com/cdown/srt with parsing, subtitle modifying,
+Based on https://github.com/cdown/srt with parsing, subtitle modifying
 functionality and Python 2 support removed. This is because of
 https://github.com/rany2/edge-tts/issues/383.
 

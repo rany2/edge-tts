@@ -311,26 +311,6 @@ def ssml_headers_plus_data(request_id: str, timestamp: str, ssml: str) -> str:
     )
 
 
-def calc_max_mesg_size(tts_config: TTSConfig) -> int:
-    """Calculates the maximum message size for the given voice, rate, and volume.
-
-    Returns:
-        int: The maximum message size.
-    """
-    websocket_max_size: int = 2**16
-    overhead_per_message: int = (
-        len(
-            ssml_headers_plus_data(
-                connect_id(),
-                date_to_string(),
-                mkssml(tts_config, ""),
-            )
-        )
-        + 50  # margin of error
-    )
-    return websocket_max_size - overhead_per_message
-
-
 class CommunicateRequest(TypedDict):
     """
     A class to communicate with the service.
@@ -379,7 +359,7 @@ class Communicate:
         # Split the text into multiple strings and store them.
         self.texts = split_text_by_byte_length(
             escape(remove_incompatible_characters(text)),
-            calc_max_mesg_size(self.tts_config),
+            4096,
         )
 
         # Validate the proxy parameter.
