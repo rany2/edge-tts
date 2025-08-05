@@ -56,7 +56,7 @@ class TTSConfig:
             region = match.group(2)
             name = match.group(3)
             if name.find("-") != -1:
-                region = region + "-" + name[: name.find("-")]
+                region = f"{region}-{name[:name.find('-')]}"
                 name = name[name.find("-") + 1 :]
             self.voice = (
                 "Microsoft Server Speech Text to Speech Voice"
