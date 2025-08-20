@@ -5,7 +5,8 @@
 import argparse
 import re
 from dataclasses import dataclass
-from typing import Literal
+
+from typing_extensions import Literal
 
 
 @dataclass

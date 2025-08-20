@@ -16,7 +16,6 @@ from typing import (
     Dict,
     Generator,
     List,
-    Literal,
     Optional,
     Tuple,
     Union,
@@ -25,6 +24,7 @@ from xml.sax.saxutils import escape, unescape
 
 import aiohttp
 import certifi
+from typing_extensions import Literal
 
 from .constants import DEFAULT_VOICE, SEC_MS_GEC_VERSION, WSS_HEADERS, WSS_URL
 from .data_classes import TTSConfig
