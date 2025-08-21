@@ -44,15 +44,21 @@ async def __list_voices(
         # Remove leading and trailing whitespace from categories and personalities.
         # This has only happened in one case with the zh-CN-YunjianNeural voice
         # where there was a leading space in one of the categories.
-        voice["VoiceTag"]["ContentCategories"] = [
-            category.strip()  # type: ignore
-            for category in voice["VoiceTag"]["ContentCategories"]
-        ]
+
+        if "ContentCategories" in voice["VoiceTag"]:
+            voice["VoiceTag"]["ContentCategories"] = [
+                category.strip()  # type: ignore
+                for category in voice["VoiceTag"]["ContentCategories"]
+            ]
+
         voice["VoiceTag"]["VoicePersonalities"] = [
             personality.strip()  # type: ignore
             for personality in voice["VoiceTag"]["VoicePersonalities"]
         ]
 
+        # if not exist key FriendlyName in voice create add value LocalName
+        if "FriendlyName" not in voice:
+            voice["FriendlyName"] = voice["LocalName"]
     return data
 
 

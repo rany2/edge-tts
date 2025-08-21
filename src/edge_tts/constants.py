@@ -1,14 +1,14 @@
 """Constants for the edge_tts package."""
 
-BASE_URL = "speech.platform.bing.com/consumer/speech/synthesize/readaloud"
+BASE_URL = "api.msedgeservices.com/tts/cognitiveservices"
 TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
 
-WSS_URL = f"wss://{BASE_URL}/edge/v1?TrustedClientToken={TRUSTED_CLIENT_TOKEN}"
-VOICE_LIST = f"https://{BASE_URL}/voices/list?trustedclienttoken={TRUSTED_CLIENT_TOKEN}"
+WSS_URL = f"wss://{BASE_URL}/websocket/v1?Ocp-Apim-Subscription-Key={TRUSTED_CLIENT_TOKEN}"
+VOICE_LIST = f"https://{BASE_URL}/voices/list?Ocp-Apim-Subscription-Key={TRUSTED_CLIENT_TOKEN}"
 
 DEFAULT_VOICE = "en-US-EmmaMultilingualNeural"
 
-CHROMIUM_FULL_VERSION = "130.0.2849.68"
+CHROMIUM_FULL_VERSION = "140.0.3485.14"
 CHROMIUM_MAJOR_VERSION = CHROMIUM_FULL_VERSION.split(".", maxsplit=1)[0]
 SEC_MS_GEC_VERSION = f"1-{CHROMIUM_FULL_VERSION}"
 BASE_HEADERS = {
