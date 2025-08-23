@@ -40,6 +40,7 @@ def _main() -> None:
         pr_err("Please install the missing dependencies.")
         sys.exit(1)
 
+    debug = os.environ.get("EDGE_PLAYBACK_DEBUG") is not None
     keep = os.environ.get("EDGE_PLAYBACK_KEEP_TEMP") is not None
     mp3_fname = os.environ.get("EDGE_PLAYBACK_MP3_FILE")
     srt_fname = os.environ.get("EDGE_PLAYBACK_SRT_FILE")
@@ -49,14 +50,15 @@ def _main() -> None:
             media = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
             media.close()
             mp3_fname = media.name
+            if debug:
+                print(f"Media file: {mp3_fname}")
 
         if not srt_fname and use_mpv:
             subtitle = tempfile.NamedTemporaryFile(suffix=".srt", delete=False)
             subtitle.close()
             srt_fname = subtitle.name
 
-        print(f"Media file: {mp3_fname}")
-        if srt_fname:
+        if debug and srt_fname:
             print(f"Subtitle file: {srt_fname}\n")
 
         edge_tts_cmd = ["edge-tts", f"--write-media={mp3_fname}"]
@@ -75,6 +77,7 @@ def _main() -> None:
             with subprocess.Popen(
                 [
                     "mpv",
+                    "--really-quiet",
                     f"--sub-file={srt_fname}",
                     mp3_fname,
                 ]
