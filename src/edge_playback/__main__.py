@@ -55,10 +55,6 @@ def _main() -> None:
             subtitle.close()
             srt_fname = subtitle.name
 
-        print(f"Media file: {mp3_fname}")
-        if srt_fname:
-            print(f"Subtitle file: {srt_fname}\n")
-
         edge_tts_cmd = ["edge-tts", f"--write-media={mp3_fname}"]
         if srt_fname:
             edge_tts_cmd.append(f"--write-subtitles={srt_fname}")
@@ -75,6 +71,7 @@ def _main() -> None:
             with subprocess.Popen(
                 [
                     "mpv",
+                    "--really-quiet",
                     f"--sub-file={srt_fname}",
                     mp3_fname,
                 ]
