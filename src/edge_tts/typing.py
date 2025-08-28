@@ -38,6 +38,7 @@ class Voice(TypedDict):
     Status: Literal["Deprecated", "GA", "Preview"]
     VoiceTag: VoiceTag
 
+
 class VoicesManagerVoice(Voice):
     """Voice data for VoicesManager."""
 
