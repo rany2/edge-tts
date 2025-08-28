@@ -41,17 +41,14 @@ async def __list_voices(
         data: List[Voice] = json.loads(await url.text())
 
     for voice in data:
-        # Remove leading and trailing whitespace from categories and personalities.
-        # This has only happened in one case with the zh-CN-YunjianNeural voice
-        # where there was a leading space in one of the categories.
-        voice["VoiceTag"]["ContentCategories"] = [
-            category.strip()  # type: ignore
-            for category in voice["VoiceTag"]["ContentCategories"]
-        ]
-        voice["VoiceTag"]["VoicePersonalities"] = [
-            personality.strip()  # type: ignore
-            for personality in voice["VoiceTag"]["VoicePersonalities"]
-        ]
+        if "VoiceTag" not in voice:
+            voice["VoiceTag"] = {}
+
+        if "ContentCategories" not in voice["VoiceTag"]:
+            voice["VoiceTag"]["ContentCategories"] = []
+
+        if "VoicePersonalities" not in voice["VoiceTag"]:
+            voice["VoiceTag"]["VoicePersonalities"] = []
 
     return data
 

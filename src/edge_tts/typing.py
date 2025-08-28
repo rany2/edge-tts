@@ -20,49 +20,8 @@ class TTSChunk(TypedDict):
 class VoiceTag(TypedDict):
     """VoiceTag data."""
 
-    ContentCategories: List[
-        Literal[
-            "Cartoon",
-            "Conversation",
-            "Copilot",
-            "Dialect",
-            "General",
-            "News",
-            "Novel",
-            "Sports",
-        ]
-    ]
-    VoicePersonalities: List[
-        Literal[
-            "Approachable",
-            "Authentic",
-            "Authority",
-            "Bright",
-            "Caring",
-            "Casual",
-            "Cheerful",
-            "Clear",
-            "Comfort",
-            "Confident",
-            "Considerate",
-            "Conversational",
-            "Cute",
-            "Expressive",
-            "Friendly",
-            "Honest",
-            "Humorous",
-            "Lively",
-            "Passion",
-            "Pleasant",
-            "Positive",
-            "Professional",
-            "Rational",
-            "Reliable",
-            "Sincere",
-            "Sunshine",
-            "Warm",
-        ]
-    ]
+    ContentCategories: List[str]
+    VoicePersonalities: List[str]
 
 
 class Voice(TypedDict):
@@ -70,13 +29,14 @@ class Voice(TypedDict):
 
     Name: str
     ShortName: str
-    Gender: Literal["Female", "Male"]
+    DisplayName: str
+    LocalName: str
+    LocaleName: str
     Locale: str
-    SuggestedCodec: Literal["audio-24khz-48kbitrate-mono-mp3"]
-    FriendlyName: str
-    Status: Literal["GA"]
+    Gender: Literal["Female", "Male"]
+    WordsPerMinute: str
+    Status: Literal["Deprecated", "GA", "Preview"]
     VoiceTag: VoiceTag
-
 
 class VoicesManagerVoice(Voice):
     """Voice data for VoicesManager."""
