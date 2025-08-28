@@ -77,7 +77,7 @@ def _main() -> None:
             with subprocess.Popen(
                 [
                     "mpv",
-                    "--really-quiet",
+                    "--msg-level=all=error,statusline=status",
                     f"--sub-file={srt_fname}",
                     mp3_fname,
                 ]
