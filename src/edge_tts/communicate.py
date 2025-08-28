@@ -433,9 +433,9 @@ class Communicate:
             trust_env=True,
             timeout=self.session_timeout,
         ) as session, session.ws_connect(
-            f"{WSS_URL}&Sec-MS-GEC={DRM.generate_sec_ms_gec()}"
-            f"&Sec-MS-GEC-Version={SEC_MS_GEC_VERSION}"
-            f"&ConnectionId={connect_id()}",
+            f"{WSS_URL}&ConnectionId={connect_id()}"
+            f"&Sec-MS-GEC={DRM.generate_sec_ms_gec()}"
+            f"&Sec-MS-GEC-Version={SEC_MS_GEC_VERSION}",
             compress=15,
             proxy=self.proxy,
             headers=WSS_HEADERS,
