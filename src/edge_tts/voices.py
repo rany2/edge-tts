@@ -3,7 +3,7 @@ correct voice based on their attributes."""
 
 import json
 import ssl
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import aiohttp
 import certifi
@@ -38,7 +38,7 @@ async def __list_voices(
         ssl=ssl_ctx,
         raise_for_status=True,
     ) as url:
-        data: List[Voice] = json.loads(await url.text())
+        data: List[Any] = json.loads(await url.text())
 
     for voice in data:
         if "VoiceTag" not in voice:
