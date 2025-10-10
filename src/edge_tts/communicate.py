@@ -9,16 +9,18 @@ import ssl
 import time
 import uuid
 from contextlib import nullcontext
-from io import TextIOWrapper
+from io import BytesIO, TextIOWrapper
 from queue import Queue
 from typing import (
     Any,
     AsyncGenerator,
+    BinaryIO,
     ContextManager,
     Dict,
     Generator,
     List,
     Optional,
+    TextIO,
     Tuple,
     Union,
 )
