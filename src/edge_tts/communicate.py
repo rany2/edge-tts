@@ -97,7 +97,7 @@ def connect_id() -> str:
     Returns:
         str: A UUID without dashes.
     """
-    return str(uuid.uuid4()).replace("-", "")
+    return uuid.uuid4().hex
 
 
 def _find_last_newline_or_space_within_limit(text: bytes, limit: int) -> int:
