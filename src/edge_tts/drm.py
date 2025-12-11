@@ -3,9 +3,10 @@ Currently the only DRM operation is generating the Sec-MS-GEC token value
 used in all API requests to Microsoft Edge's online text-to-speech service."""
 
 import hashlib
+import secrets
 from datetime import datetime as dt
 from datetime import timezone as tz
-from typing import Optional
+from typing import Dict, Optional
 
 import aiohttp
 
@@ -131,3 +132,29 @@ class DRM:
 
         # Compute the SHA256 hash and return the uppercased hex digest
         return hashlib.sha256(str_to_hash.encode("ascii")).hexdigest().upper()
+
+    @staticmethod
+    def generate_muid() -> str:
+        """
+        Generates a random MUID.
+
+        Returns:
+            str: The generated MUID.
+        """
+        return secrets.token_hex(16).upper()
+
+    @staticmethod
+    def headers_with_muid(headers: Dict[str, str]) -> Dict[str, str]:
+        """
+        Returns a copy of the given headers with the MUID header added.
+
+        Args:
+            headers (dict): The original headers.
+
+        Returns:
+            dict: The headers with the MUID header added.
+        """
+        combined_headers = headers.copy()
+        assert "Cookie" not in combined_headers
+        combined_headers["Cookie"] = f"muid={DRM.generate_muid()};"
+        return combined_headers

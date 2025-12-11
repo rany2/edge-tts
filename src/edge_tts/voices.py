@@ -33,7 +33,7 @@ async def __list_voices(
     async with session.get(
         f"{VOICE_LIST}&Sec-MS-GEC={DRM.generate_sec_ms_gec()}"
         f"&Sec-MS-GEC-Version={SEC_MS_GEC_VERSION}",
-        headers=VOICE_HEADERS,
+        headers=DRM.headers_with_muid(VOICE_HEADERS),
         proxy=proxy,
         ssl=ssl_ctx,
         raise_for_status=True,
