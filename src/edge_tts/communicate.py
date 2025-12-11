@@ -392,6 +392,7 @@ class Communicate:
         raise UnexpectedResponse("No WordBoundary metadata found")
 
     async def __stream(self) -> AsyncGenerator[TTSChunk, None]:
+        # TODO: support webm-24khz-16bit-mono-opus properly. Used by macOS.
         async def send_command_request() -> None:
             """Sends the command request to the service."""
             word_boundary = self.tts_config.boundary == "WordBoundary"
@@ -506,9 +507,13 @@ class Communicate:
 
                     # At termination of the stream, the service sends a binary message
                     # with no Content-Type; this is expected. What is not expected is for
-                    # an MPEG audio stream to be sent with no data.
+                    # an audio stream to be sent with no data.
                     content_type = parameters.get(b"Content-Type", None)
-                    if content_type not in [b"audio/mpeg", None]:
+                    if content_type not in (
+                        b"audio/mpeg",
+                        b"audio/webm; codec=opus",
+                        None,
+                    ):
                         raise UnexpectedResponse(
                             "Received binary message, but with an unexpected Content-Type."
                         )
