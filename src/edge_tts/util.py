@@ -10,6 +10,7 @@ from tabulate import tabulate
 from . import Communicate, SubMaker, list_voices
 from .constants import DEFAULT_VOICE
 from .data_classes import UtilArgs
+from .version import __version__
 
 
 async def _print_voices(*, proxy: Optional[str]) -> None:
@@ -115,6 +116,9 @@ async def amain() -> None:
         help="send subtitle output to provided file instead of stderr",
     )
     parser.add_argument("--proxy", help="use a proxy for TTS and voice list.")
+    parser.add_argument(
+        "--version", action="version", version=f"edge-tts {__version__}"
+    )
     args = parser.parse_args(namespace=UtilArgs())
 
     if args.list_voices:
