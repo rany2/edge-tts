@@ -29,12 +29,10 @@ class Voice(TypedDict):
 
     Name: str
     ShortName: str
-    DisplayName: str
-    LocalName: str
-    LocaleName: str
-    Locale: str
     Gender: Literal["Female", "Male"]
-    WordsPerMinute: str
+    Locale: str
+    SuggestedCodec: str
+    FriendlyName: str
     Status: Literal["Deprecated", "GA", "Preview"]
     VoiceTag: VoiceTag
 
