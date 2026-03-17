@@ -26,7 +26,14 @@ import aiohttp
 import certifi
 from typing_extensions import Literal
 
-from .constants import DEFAULT_VOICE, SEC_MS_GEC_VERSION, WSS_HEADERS, WSS_URL
+from .constants import (
+    DEFAULT_VOICE,
+    MP3_BITRATE_BPS,
+    SEC_MS_GEC_VERSION,
+    TICKS_PER_SECOND,
+    WSS_HEADERS,
+    WSS_URL,
+)
 from .data_classes import TTSConfig
 from .drm import DRM
 from .exceptions import (
@@ -370,6 +377,8 @@ class Communicate:
             "offset_compensation": 0,
             "last_duration_offset": 0,
             "stream_was_called": False,
+            "chunk_audio_bytes": 0,
+            "cumulative_audio_bytes": 0,
         }
 
     def __parse_metadata(self, data: bytes) -> TTSChunk:
@@ -390,6 +399,26 @@ class Communicate:
                 continue
             raise UnknownResponse(f"Unknown metadata type: {meta_type}")
         raise UnexpectedResponse("No WordBoundary metadata found")
+
+    def __compensate_offset(self) -> None:
+        """Update inter-chunk offset_compensation from cumulative CBR audio bytes.
+
+        The output format is audio-24khz-48kbitrate-mono-mp3 (48 kbps CBR).
+        For any CBR stream the byte-to-tick conversion is exact integer
+        arithmetic:  ticks = total_bytes * 8 * 10_000_000 // 48_000.
+
+        This replaces the previous metadata-based accumulation which drifted
+        on long texts due to variable AI silence and Microsoft's integer
+        overflow in reported offsets.
+        """
+        self.state["cumulative_audio_bytes"] += self.state["chunk_audio_bytes"]
+        self.state["offset_compensation"] = (
+            self.state["cumulative_audio_bytes"]
+            * 8
+            * TICKS_PER_SECOND
+            // MP3_BITRATE_BPS
+        )
+        self.state["chunk_audio_bytes"] = 0
 
     async def __stream(self) -> AsyncGenerator[TTSChunk, None]:
         async def send_command_request() -> None:
@@ -463,19 +492,9 @@ class Communicate:
                             parsed_metadata["offset"] + parsed_metadata["duration"]
                         )
                     elif path == b"turn.end":
-                        # Update the offset compensation for the next SSML request.
-                        self.state["offset_compensation"] = self.state[
-                            "last_duration_offset"
-                        ]
-
-                        # Use average padding typically added by the service
-                        # to the end of the audio data. This seems to work pretty
-                        # well for now, but we might ultimately need to use a
-                        # more sophisticated method like using ffmpeg to get
-                        # the actual duration of the audio data.
-                        self.state["offset_compensation"] += 8_750_000
-
-                        # Exit the loop so we can send the next SSML request.
+                        # Compute inter-chunk offset from actual CBR
+                        # audio bytes (see __compensate_offset).
+                        self.__compensate_offset()
                         break
                     elif path not in (b"response", b"turn.start"):
                         raise UnknownResponse("Unknown path received")
@@ -529,8 +548,9 @@ class Communicate:
                             "Received binary message, but it is missing the audio data."
                         )
 
-                    # Yield the audio data.
+                    # Yield the audio data and count bytes for offset compensation.
                     audio_was_received = True
+                    self.state["chunk_audio_bytes"] += len(data)
                     yield {"type": "audio", "data": data}
                 elif received.type == aiohttp.WSMsgType.ERROR:
                     raise WebSocketError(
@@ -562,6 +582,7 @@ class Communicate:
 
         # Stream the audio and metadata from the service.
         for self.state["partial_text"] in self.texts:
+            self.state["chunk_audio_bytes"] = 0
             try:
                 async for message in self.__stream():
                     yield message
@@ -570,6 +591,7 @@ class Communicate:
                     raise
 
                 DRM.handle_client_response_error(e)
+                self.state["chunk_audio_bytes"] = 0
                 async for message in self.__stream():
                     yield message
 

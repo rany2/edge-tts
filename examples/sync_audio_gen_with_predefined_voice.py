@@ -2,7 +2,6 @@
 
 """Sync variant of the example for generating audio with a predefined voice"""
 
-
 import edge_tts
 
 TEXT = "Hello World!"

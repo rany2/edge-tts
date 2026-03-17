@@ -36,3 +36,10 @@ VOICE_HEADERS = {
     "Sec-Fetch-Dest": "empty",
 }
 VOICE_HEADERS.update(BASE_HEADERS)
+
+# Audio timing constants for CBR-based offset compensation.
+# The output format "audio-24khz-48kbitrate-mono-mp3" is a 48 kbps constant
+# bitrate stream.  Microsoft's offset/duration metadata uses 100-nanosecond
+# ticks, so 1 second = 10,000,000 ticks.
+TICKS_PER_SECOND = 10_000_000
+MP3_BITRATE_BPS = 48_000

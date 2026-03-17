@@ -3,6 +3,7 @@
 """Sync variant of the async .stream() method to
 get audio chunks and feed them to SubMaker to
 generate subtitles"""
+
 import sys
 
 import edge_tts

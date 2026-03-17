@@ -58,3 +58,5 @@ class CommunicateState(TypedDict):
     offset_compensation: float
     last_duration_offset: float
     stream_was_called: bool
+    chunk_audio_bytes: int  # bytes received in the current chunk
+    cumulative_audio_bytes: int  # bytes received across all completed chunks
