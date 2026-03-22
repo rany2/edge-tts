@@ -3,7 +3,7 @@ correct voice based on their attributes."""
 
 import json
 import ssl
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import certifi
@@ -32,13 +32,19 @@ async def __list_voices(
     Returns:
         List[Voice]: A list of voices and their attributes.
     """
+    # Only pass proxy if explicitly set; omitting it allows aiohttp to
+    # pick up HTTPS_PROXY (and similar) from the environment via trust_env.
+    get_kwargs: Dict[str, object] = {}
+    if proxy is not None:
+        get_kwargs["proxy"] = proxy
+
     async with session.get(
         f"{VOICE_LIST}&Sec-MS-GEC={DRM.generate_sec_ms_gec()}"
         f"&Sec-MS-GEC-Version={SEC_MS_GEC_VERSION}",
         headers=DRM.headers_with_muid(VOICE_HEADERS),
-        proxy=proxy,
         ssl=ssl_ctx,
         raise_for_status=True,
+        **get_kwargs,
     ) as url:
         data: List[Any] = json.loads(await url.text())
 

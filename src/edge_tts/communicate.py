@@ -457,6 +457,12 @@ class Communicate:
         # don't receive any audio data.
         audio_was_received = False
 
+        # Only pass proxy if explicitly set; omitting it allows aiohttp to
+        # pick up HTTPS_PROXY (and similar) from the environment via trust_env.
+        ws_kwargs: Dict[str, object] = {}
+        if self.proxy is not None:
+            ws_kwargs["proxy"] = self.proxy
+
         # Create a new connection to the service.
         async with aiohttp.ClientSession(
             connector=self.connector,
@@ -467,9 +473,9 @@ class Communicate:
             f"&Sec-MS-GEC={DRM.generate_sec_ms_gec()}"
             f"&Sec-MS-GEC-Version={SEC_MS_GEC_VERSION}",
             compress=15,
-            proxy=self.proxy,
             headers=DRM.headers_with_muid(WSS_HEADERS),
             ssl=_SSL_CTX,
+            **ws_kwargs,
         ) as websocket:
             await send_command_request()
 
