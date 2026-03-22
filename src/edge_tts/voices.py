@@ -13,6 +13,8 @@ from .constants import SEC_MS_GEC_VERSION, VOICE_HEADERS, VOICE_LIST
 from .drm import DRM
 from .typing import Voice, VoicesManagerFind, VoicesManagerVoice
 
+_SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+
 
 async def __list_voices(
     session: aiohttp.ClientSession, ssl_ctx: ssl.SSLContext, proxy: Optional[str]
@@ -69,16 +71,15 @@ async def list_voices(
     Returns:
         List[Voice]: A list of voices and their attributes.
     """
-    ssl_ctx = ssl.create_default_context(cafile=certifi.where())
     async with aiohttp.ClientSession(connector=connector, trust_env=True) as session:
         try:
-            data = await __list_voices(session, ssl_ctx, proxy)
+            data = await __list_voices(session, _SSL_CTX, proxy)
         except aiohttp.ClientResponseError as e:
             if e.status != 403:
                 raise
 
             DRM.handle_client_response_error(e)
-            data = await __list_voices(session, ssl_ctx, proxy)
+            data = await __list_voices(session, _SSL_CTX, proxy)
     return data
 
 
