@@ -454,8 +454,10 @@ class Communicate:
 
         # audio_was_received indicates whether we have received audio data
         # from the websocket. This is so we can raise an exception if we
-        # don't receive any audio data.
+        # don't receive any audio data. Track websocket message types for
+        # diagnostic purposes to help debug upstream issues.
         audio_was_received = False
+        ws_messages_seen: list[str] = []
 
         # Create a new connection to the service.
         async with aiohttp.ClientSession(
@@ -484,6 +486,7 @@ class Communicate:
 
                     path = parameters.get(b"Path", None)
                     if path == b"audio.metadata":
+                        ws_messages_seen.append("audio.metadata")
                         # Parse the metadata and yield it.
                         parsed_metadata = self.__parse_metadata(data)
                         yield parsed_metadata
@@ -493,12 +496,15 @@ class Communicate:
                             parsed_metadata["offset"] + parsed_metadata["duration"]
                         )
                     elif path == b"turn.end":
+                        ws_messages_seen.append("turn.end")
                         # Compute inter-chunk offset from actual CBR
                         # audio bytes (see __compensate_offset).
                         self.__compensate_offset()
                         break
                     elif path not in (b"response", b"turn.start"):
                         raise UnknownResponse("Unknown path received")
+                    else:
+                        ws_messages_seen.append(path.decode())
                 elif received.type == aiohttp.WSMsgType.BINARY:
                     # Message is too short to contain header length.
                     if len(received.data) < 2:
@@ -551,6 +557,7 @@ class Communicate:
 
                     # Yield the audio data and count bytes for offset compensation.
                     audio_was_received = True
+                    ws_messages_seen.append("audio")
                     self.state["chunk_audio_bytes"] += len(data)
                     yield {"type": "audio", "data": data}
                 elif received.type == aiohttp.WSMsgType.ERROR:
@@ -560,7 +567,8 @@ class Communicate:
 
             if not audio_was_received:
                 raise NoAudioReceived(
-                    "No audio was received. Please verify that your parameters are correct."
+                    f"No audio was received. WebSocket messages seen: {ws_messages_seen}. "
+                    "Please verify that your parameters are correct."
                 )
 
     async def stream(
