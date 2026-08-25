@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     name: "Lint"
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v7
+    - uses: actions/setup-python@v7
       with:
         python-version: 3.x
     - name: Install all dependencies
