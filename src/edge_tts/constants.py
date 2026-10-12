@@ -3,7 +3,14 @@
 BASE_URL = "speech.platform.bing.com/consumer/speech/synthesize/readaloud"
 TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
 
-WSS_URL = f"wss://{BASE_URL}/edge/v1?TrustedClientToken={TRUSTED_CLIENT_TOKEN}"
+# Since October 2026 the legacy host refuses speech synthesis with a 403.
+# Microsoft Edge 155 synthesizes through api.msedgeservices.com, which also
+# accepts the legacy token, given as Ocp-Apim-Subscription-Key. The voice
+# list is still served by the legacy host.
+WSS_URL = (
+    "wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1"
+    f"?Ocp-Apim-Subscription-Key={TRUSTED_CLIENT_TOKEN}"
+)
 VOICE_LIST = f"https://{BASE_URL}/voices/list?trustedclienttoken={TRUSTED_CLIENT_TOKEN}"
 
 DEFAULT_VOICE = "en-US-EmmaMultilingualNeural"
