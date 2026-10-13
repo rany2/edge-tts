@@ -89,3 +89,4 @@ class UtilArgs(argparse.Namespace):
     write_media: str
     write_subtitles: str
     proxy: str
+    no_progress: bool
