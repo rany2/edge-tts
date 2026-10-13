@@ -6,6 +6,7 @@ import secrets
 import struct
 from datetime import datetime as dt
 from datetime import timezone as tz
+from email.utils import parsedate_to_datetime
 from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
@@ -530,12 +531,11 @@ class DRM:
             Optional[float]: Unix timestamp of the parsed date string, or None if parsing failed.
         """
         try:
-            return (
-                dt.strptime(date, "%a, %d %b %Y %H:%M:%S %Z")
-                .replace(tzinfo=tz.utc)
-                .timestamp()
-            )
-        except ValueError:
+            parsed = parsedate_to_datetime(date)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=tz.utc)
+            return parsed.timestamp()
+        except (TypeError, ValueError, OverflowError):
             return None
 
     @staticmethod
