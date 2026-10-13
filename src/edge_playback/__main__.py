@@ -88,6 +88,9 @@ def _play_media(use_mpv: bool, mp3_fname: str, srt_fname: Optional[str]) -> None
         "mpv",
         "--msg-level=all=error,statusline=status",
     ]
+    if sys.platform == "darwin":
+        # Work around mpv's CoreAudio channel layout failure on macOS 27.
+        mpv_cmd.extend(["--audio-channels=stereo", "--audio-format=float"])
     if srt_fname:
         mpv_cmd.append(f"--sub-file={srt_fname}")
     mpv_cmd.append(mp3_fname)
