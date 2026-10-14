@@ -627,12 +627,17 @@ class Communicate:
             async def get_items() -> None:
                 async for item in self.stream():
                     queue.put(item)
-                queue.put(None)
 
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(get_items())
-            loop.close()
+            try:
+                loop.run_until_complete(get_items())
+            except BaseException as exc:  # pylint: disable=broad-exception-caught
+                # Hand the error to the consumer, otherwise it would wait forever.
+                queue.put(exc)
+            finally:
+                queue.put(None)
+                loop.close()
 
         queue: Queue = Queue()  # type: ignore
 
@@ -643,6 +648,8 @@ class Communicate:
                 item = queue.get()
                 if item is None:
                     break
+                if isinstance(item, BaseException):
+                    raise item
                 yield item
 
     def save_sync(
