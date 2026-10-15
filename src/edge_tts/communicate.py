@@ -232,7 +232,9 @@ def split_text_by_byte_length(
 
         if split_at < 0:
             ## No newline or space found, so we need to find a safe UTF-8 split point
-            split_at = _find_safe_utf8_split_point(text)
+            ## Only the bytes allowed by the limit may be considered, otherwise
+            ## the whole remainder is returned and the chunk exceeds byte_length.
+            split_at = _find_safe_utf8_split_point(text[:byte_length])
 
         # Adjust the split point to avoid cutting in the middle of an xml entity, such as '&amp;'
         split_at = _adjust_split_point_for_xml_entity(text, split_at)
@@ -251,8 +253,19 @@ def split_text_by_byte_length(
             yield chunk
 
         # Prepare for the next iteration
-        # If split_at became 0 after adjustment, advance by 1 to avoid infinite loop
-        text = text[split_at if split_at > 0 else 1 :]
+        if split_at <= 0:
+            # The split point collapsed to zero: no chunk could be produced within
+            # byte_length. Skipping a leading whitespace byte is harmless, but
+            # advancing past anything else would silently drop input.
+            if not text[:1].isspace():
+                raise ValueError(
+                    "Maximum byte length is too small or "
+                    "invalid text structure near '&' or invalid UTF-8"
+                )
+            text = text[1:]
+            continue
+
+        text = text[split_at:]
 
     # Yield the remaining part
     remaining_chunk = text.strip()
