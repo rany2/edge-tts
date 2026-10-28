@@ -84,3 +84,56 @@ Other projects that use the `edge-tts` module include:
 * [hass-edge-tts](https://github.com/hasscc/hass-edge-tts/blob/main/custom_components/edge_tts/tts.py)
 * [Podcastfy](https://github.com/souzatharsis/podcastfy/blob/main/podcastfy/tts/providers/edge.py)
 * [tts-samples](https://github.com/yaph/tts-samples/blob/main/bin/create_sound_samples.py) - a collection of [mp3 sound samples](https://github.com/yaph/tts-samples/tree/main/mp3) to facilitate picking a voice for your project.
+
+## Troubleshooting
+
+### `NoAudioReceived`: "No audio was received"
+
+`edge_tts.exceptions.NoAudioReceived` is raised when the WebSocket session with the service completes without the service sending any audio. The connection itself succeeded, so the failure is either in what was requested or in the service's handling of it, not in the transport. The `edge-tts` command lets the exception propagate, so from the CLI you see a traceback ending in `edge_tts.exceptions.NoAudioReceived: No audio was received. Please verify that your parameters are correct.`
+
+The causes reported in [#473](https://github.com/rany2/edge-tts/issues/473), roughly in order of how often they turn out to be the reason:
+
+* **Upstream service state.** The service sometimes ends a turn without audio for a request that succeeds a minute later. This is intermittent and a retry usually clears it.
+* **The voice.** Some voices fail consistently while others work. `edge-tts --list-voices` only shows that the voice is still listed, not that the service will synthesize with it. If one voice always fails and another always works for the same text, the voice is the problem, not your network or your code.
+* **The text.** Text the voice cannot pronounce, such as rare characters or unusual scripts, can also end the turn without audio. Narrowing down to the failing word is the only way to see this.
+* **Region, IP or proxy.** Datacenter, VPN and proxied egress, and some regions, are served less reliably. Comparing with and without `--proxy` is a quick test.
+* **Bulk generation.** Sustained high request rates produce more of these failures, so throttle instead of retrying harder.
+
+Retrying does **not** fix a voice or text that the service will not synthesize, and adding attempts cannot turn a persistent failure into a success. Keep the attempt count small so that a failure that is real still reaches you instead of being hidden behind retries. Only `NoAudioReceived` is worth retrying: it is the one error that means "try the same request again", while errors such as `UnknownResponse`, `UnexpectedResponse` and `WebSocketError` indicate something that a plain retry will not change.
+
+Each attempt needs a new `Communicate` object, because an instance can only be streamed once. `save()` truncates the destination file when the attempt starts, so a failed final attempt can leave a partial file behind; write to a temporary path and rename if that matters to you.
+
+```python
+import asyncio
+
+import edge_tts
+from edge_tts.exceptions import NoAudioReceived
+
+TEXT = "Hello, world!"
+VOICE = "en-US-EmmaMultilingualNeural"
+OUTPUT_FILE = "hello.mp3"
+ATTEMPTS = 3
+
+
+async def synthesize(text: str, voice: str, output_file: str) -> None:
+    """Save speech to a file, retrying only empty-audio service responses."""
+    for attempt in range(1, ATTEMPTS + 1):
+        communicate = edge_tts.Communicate(text, voice)
+        try:
+            await communicate.save(output_file)
+        except NoAudioReceived:
+            if attempt == ATTEMPTS:
+                # Persistent failure: surface it instead of hiding it.
+                raise
+            delay = 2 ** (attempt - 1)
+            print(f"No audio on attempt {attempt}/{ATTEMPTS}, retrying in {delay}s")
+            await asyncio.sleep(delay)
+        else:
+            return
+
+
+if __name__ == "__main__":
+    asyncio.run(synthesize(TEXT, VOICE, OUTPUT_FILE))
+```
+
+If every attempt fails for the same voice and text, retrying will not help: try a different voice, a shorter text, or a different network, and if the failure keeps reproducing with a voice that is listed, add your details to [#473](https://github.com/rany2/edge-tts/issues/473).
