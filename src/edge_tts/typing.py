@@ -46,6 +46,8 @@ class VoicesManagerVoice(Voice):
 class VoicesManagerFind(TypedDict):
     """Voice data for VoicesManager.find()."""
 
+    Name: NotRequired[str]
+    ShortName: NotRequired[str]
     Gender: NotRequired[Literal["Female", "Male"]]
     Locale: NotRequired[str]
     Language: NotRequired[str]
