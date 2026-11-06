@@ -11,6 +11,7 @@ from contextlib import nullcontext
 from io import TextIOWrapper
 from queue import Queue
 from typing import (
+    Any,
     AsyncGenerator,
     ContextManager,
     Dict,
@@ -318,6 +319,22 @@ def ssml_headers_plus_data(request_id: str, timestamp: str, ssml: str) -> str:
     )
 
 
+def _ws_receive_timeout(receive_timeout: int) -> Dict[str, Any]:
+    """Keyword arguments that apply receive_timeout to WebSocket reads.
+
+    Since aiohttp 3.10, ws_connect() replaces the session's sock_read timeout
+    with its own receive timeout (None by default) once the connection is
+    upgraded, so without this a silent server makes the stream hang forever.
+    """
+    if hasattr(aiohttp, "ClientWSTimeout"):  # aiohttp >= 3.11
+        return {
+            "timeout": aiohttp.ClientWSTimeout(
+                ws_receive=receive_timeout, ws_close=10.0  # aiohttp's default
+            )
+        }
+    return {"receive_timeout": receive_timeout}
+
+
 class Communicate:
     """
     Communicate with the service.
@@ -367,6 +384,7 @@ class Communicate:
             sock_connect=connect_timeout,
             sock_read=receive_timeout,
         )
+        self.receive_timeout: int = receive_timeout
 
         # Validate the connector parameter.
         if connector is not None and not isinstance(connector, aiohttp.BaseConnector):
@@ -470,6 +488,7 @@ class Communicate:
             proxy=self.proxy,
             headers=DRM.headers_with_muid(WSS_HEADERS),
             ssl=_SSL_CTX,
+            **_ws_receive_timeout(self.receive_timeout),
         ) as websocket:
             await send_command_request()
 
