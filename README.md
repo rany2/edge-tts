@@ -26,7 +26,7 @@ If you wish to play it back immediately with subtitles, you could use the `edge-
 
 Note that `edge-playback` requires the installation of the [`mpv` command line player](https://mpv.io/), except on Windows.
 
-All `edge-tts` commands work with `edge-playback` with the exception of the `--write-media`, `--write-subtitles` and `--list-voices` options.
+All `edge-tts` options work with `edge-playback` with the exception of the `--write-media`, `--write-subtitles` and `--list-voices` options.
 
 ### Changing the voice
 
